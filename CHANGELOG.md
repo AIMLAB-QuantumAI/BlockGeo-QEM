@@ -8,6 +8,7 @@ All notable changes to this project are listed here. Version numbers follow [sem
 - Example notebook `examples/quickstart.ipynb` that runs a small benchmark end to end, with stored outputs (#10).
 - Contributing guidelines, issue templates and a pull-request template (#14).
 - This changelog (#15).
+- A badge in the README that shows the status of the tests on `main`.
 
 ### Changed
 - Importing `qemlib` keeps thread settings chosen by the user; 4 threads remain the default (#11).

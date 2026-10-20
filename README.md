@@ -1,5 +1,7 @@
 # BlockGeo-QEM
 
+[![tests](https://github.com/AIMLAB-QuantumAI/BlockGeo-QEM/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/AIMLAB-QuantumAI/BlockGeo-QEM/actions/workflows/tests.yml)
+
 BlockGeo-QEM is a quantum error-mitigation method in which a neural network maps the measured two-qubit block marginals of a qubit chain to physical block density matrices and is trained with the Bures distance.
 
 ## Authors
