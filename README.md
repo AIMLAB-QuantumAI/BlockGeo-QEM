@@ -37,6 +37,7 @@ BlockGeo-QEM/
 ├── scripts/                       reproduce_data.sh, reproduce_benchmarks.sh, reproduce_figures.sh
 ├── tests/                         fast pytest tests
 ├── docs/reproduce.md              full reproduction guide
+├── examples/quickstart.ipynb      small end-to-end example with outputs
 ├── .github/workflows/tests.yml    continuous integration (pytest on push and pull request)
 ├── requirements.txt               pinned pip requirements
 ├── environment.yml                conda environment with the same pins
@@ -96,6 +97,8 @@ ls "$BLOCKGEO_WORKDIR/results_v3"
 - `results_v3/pred/base_tfim_n4_B10000_d1.npz` and `results_v3/pred/ours_tfim_n4_B10000_d1.npz`, with the mitigated block coordinates of every method and the ideal ones (`__ideal__`); keys are the method names with spaces replaced by `_` and colons removed, e.g. `Noisy_(raw)`.
 
 With 12 training circuits the errors say nothing about the methods. The quick start only checks that the installation works.
+
+The notebook `examples/quickstart.ipynb` runs the same steps with 100 training circuits in about a minute on a CPU. It compares the unmitigated estimates, OLS, GNN-QEM and BlockGeo-QEM, and counts the blocks whose mitigated coordinates do not belong to a density matrix.
 
 ## Reproducing the results
 
