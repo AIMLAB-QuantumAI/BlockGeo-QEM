@@ -45,6 +45,7 @@ BlockGeo-QEM/
 ├── environment.yml                conda environment with the same pins
 ├── pytest.ini                     pytest settings (collects tests/ only)
 ├── CHANGELOG.md                   changes between versions
+├── Makefile                       common tasks (make help)
 ├── CITATION.cff
 ├── CONTRIBUTING.md                how to report problems and propose changes
 └── LICENSE
@@ -101,6 +102,8 @@ ls "$BLOCKGEO_WORKDIR/results_v3"
 - `results_v3/pred/base_tfim_n4_B10000_d1.npz` and `results_v3/pred/ours_tfim_n4_B10000_d1.npz`, with the mitigated block coordinates of every method and the ideal ones (`__ideal__`); keys are the method names with spaces replaced by `_` and colons removed, e.g. `Noisy_(raw)`.
 
 With 12 training circuits the errors say nothing about the methods. The quick start only checks that the installation works.
+
+`make test` and `make quickstart` run the same steps, and `make help` lists the other targets of the `Makefile`.
 
 The notebook `examples/quickstart.ipynb` runs the same steps with 100 training circuits in about a minute on a CPU. It compares the unmitigated estimates, OLS, GNN-QEM and BlockGeo-QEM, and counts the blocks whose mitigated coordinates do not belong to a density matrix.
 
