@@ -1,6 +1,7 @@
 """End-to-end run on a tiny uniform-TFIM data set (n = 4, one Trotter step, 12 training and 4 test circuits, 3
 near-Clifford circuits per test circuit): the generator gen_v3.py, the measurement model and baselines of run_v3.py,
-BlockGeo-QEM with shortened training and the runner's command line. Data and results go to temporary directories."""
+BlockGeo-QEM with shortened training, the runner's command line and the statistics of the ideal block marginals
+(paper_tables.py marginals). Data and results go to temporary directories."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -226,3 +227,19 @@ def test_runner_command_line(work, data, run_python):
     assert sorted(pred) == sorted(["__ideal__"] + methods)
     np.testing.assert_array_equal(pred["__ideal__"], data["te"]["S_ideal"])
     np.testing.assert_allclose(pred["Noisy"], data["te1"], rtol=0, atol=1e-12)
+
+
+def test_marginal_statistics(work, run_python, monkeypatch):
+    """paper_tables.py marginals: the median purity and the median smallest eigenvalue of the ideal block states of
+    the test circuits agree with those of the density matrices that qemlib builds from the coordinates."""
+    import paper_tables
+
+    monkeypatch.setattr(paper_tables.paths, "FEAT_DIR", str(work / "feats_v3"))
+    t = paper_tables.marginals()
+    assert t[["family", "n", "depth"]].values.tolist() == [["tfim", N, DEPTH]]
+    R = L.block_states(load(work, "test")["S_ideal"])                    # [N_TEST, NB, 4, 4]
+    assert t.purity[0] == pytest.approx(np.median(L.purity(R)), abs=1e-12)
+    assert t.lambda_min[0] == pytest.approx(np.median(np.linalg.eigvalsh(R)[..., 0]), abs=1e-12)
+    assert 0.25 <= t.purity[0] <= 1 and -1e-12 <= t.lambda_min[0] <= 0.25
+    out = run_python("src/paper_tables.py", "marginals", workdir=work).stdout
+    assert "Uniform TFIM" in out and f"{t.purity[0]:.4f}" in out
