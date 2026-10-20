@@ -42,6 +42,7 @@ BlockGeo-QEM/
 ├── requirements.txt               pinned pip requirements
 ├── environment.yml                conda environment with the same pins
 ├── pytest.ini                     pytest settings (collects tests/ only)
+├── CHANGELOG.md                   changes between versions
 ├── CITATION.cff
 ├── CONTRIBUTING.md                how to report problems and propose changes
 └── LICENSE
