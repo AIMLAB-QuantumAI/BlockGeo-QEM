@@ -11,6 +11,7 @@ All notable changes to this project are listed here. Version numbers follow [sem
 - A badge in the README that shows the status of the tests on `main`.
 - `data/hardware/README.md`, which describes the hardware runs and their files and shows how to load them.
 - `examples/mitigate_own_data.py`, which applies BlockGeo-QEM to block coordinates supplied by the user.
+- A `Makefile` with targets for the tests, the quick start, the example and the reproduction scripts.
 
 ### Changed
 - Importing `qemlib` keeps thread settings chosen by the user; 4 threads remain the default (#11).
