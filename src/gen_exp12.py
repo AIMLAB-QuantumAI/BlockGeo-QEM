@@ -51,7 +51,9 @@ def main():
     ap.add_argument("--depths", default="1,3,6")
     ap.add_argument("--drift", default="0.7,0.85,1.15,1.3")
     ap.add_argument("--K", type=int, default=24)
-    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--workers", type=int, default=min(8, os.cpu_count() or 1),
+                    help="worker processes (default: 8 or the number of CPUs, whichever is smaller; "
+                         f"{min(8, os.cpu_count() or 1)} here)")
     args = ap.parse_args()
     fam, n, K = args.family, args.n, args.K
     fs = [float(x) for x in args.drift.split(",")]

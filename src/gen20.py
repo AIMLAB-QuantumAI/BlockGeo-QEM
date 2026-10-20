@@ -61,7 +61,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=20)
     ap.add_argument("--depths", default="1,2,3")
-    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--workers", type=int, default=min(8, os.cpu_count() or 1),
+                    help="worker processes (default: 8 or the number of CPUs, whichever is smaller; "
+                         f"{min(8, os.cpu_count() or 1)} here)")
     ap.add_argument("--K", type=int, default=24)
     ap.add_argument("--scales", default="1")
     args = ap.parse_args()

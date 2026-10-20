@@ -129,7 +129,9 @@ def main():
     ap.add_argument("--n_train", type=int, default=200)
     ap.add_argument("--n_test", type=int, default=50)
     ap.add_argument("--K", type=int, default=24)
-    ap.add_argument("--workers", type=int, default=14)
+    ap.add_argument("--workers", type=int, default=min(14, os.cpu_count() or 1),
+                    help="worker processes (default: 14 or the number of CPUs, whichever is smaller; "
+                         f"{min(14, os.cpu_count() or 1)} here)")
     args = ap.parse_args()
     os.makedirs(FEAT_DIR, exist_ok=True)
     with mp.get_context("fork").Pool(args.workers, initializer=_init, initargs=(args.n,)) as pool:
