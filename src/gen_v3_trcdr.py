@@ -24,7 +24,9 @@ def main():
     ap.add_argument("--depths", required=True)
     ap.add_argument("--n_train", type=int, default=200)
     ap.add_argument("--K", type=int, default=24)
-    ap.add_argument("--workers", type=int, default=10)
+    ap.add_argument("--workers", type=int, default=min(10, os.cpu_count() or 1),
+                    help="worker processes (default: 10 or the number of CPUs, whichever is smaller; "
+                         f"{min(10, os.cpu_count() or 1)} here)")
     args = ap.parse_args()
     n, K = args.n, args.K
     D, nb = 2 ** n, n - 1
