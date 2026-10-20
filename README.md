@@ -43,6 +43,7 @@ BlockGeo-QEM/
 ├── environment.yml                conda environment with the same pins
 ├── pytest.ini                     pytest settings (collects tests/ only)
 ├── CITATION.cff
+├── CONTRIBUTING.md                how to report problems and propose changes
 └── LICENSE
 ```
 
@@ -270,4 +271,4 @@ We acknowledge the use of IBM Quantum services for this work. The views expresse
 
 ## Contact
 
-Questions and bug reports are welcome as GitHub issues.
+Questions and bug reports are welcome as GitHub issues. `CONTRIBUTING.md` describes how to report a problem and how to propose a change through a pull request.
