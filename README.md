@@ -243,7 +243,7 @@ These are the variables that the code in `src/` and `hardware/` reads.
 | `GPU_FRAC` | `src/v3.py` | unset | if set, the fraction of GPU memory one process may allocate |
 | `OMP_NUM_THREADS` | `src/gen_v3.py`, `gen_v3_trcdr.py`, `gen_exp12.py`, `gen20.py` | `1` if unset | threads of the linear-algebra libraries in the data generators, which set it before numpy is imported |
 
-Importing `src/blockgeo_qem_fixed.py` (through `qemlib.py`) sets `OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `NUMEXPR_NUM_THREADS` to 4 for every library that reads them after that import. The second device uses `BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48 BLOCKGEO_TAG=_v3_torino`, and the 20-qubit study uses `BLOCKGEO_CHAIN=33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120`.
+Importing `src/blockgeo_qem_fixed.py` (through `qemlib.py`) sets `OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and `NUMEXPR_NUM_THREADS` to 4 unless they are already set, so values chosen by the user are kept. The second device uses `BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48 BLOCKGEO_TAG=_v3_torino`, and the 20-qubit study uses `BLOCKGEO_CHAIN=33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120`.
 
 ## Citation
 
