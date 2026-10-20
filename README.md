@@ -39,7 +39,7 @@ BlockGeo-QEM/
 ├── scripts/                       reproduce_data.sh, reproduce_benchmarks.sh, reproduce_figures.sh
 ├── tests/                         fast pytest tests
 ├── docs/reproduce.md              full reproduction guide
-├── examples/quickstart.ipynb      small end-to-end example with outputs
+├── examples/                      quickstart.ipynb (small end-to-end example with outputs), mitigate_own_data.py
 ├── .github/workflows/tests.yml    continuous integration (pytest on push and pull request)
 ├── requirements.txt               pinned pip requirements
 ├── environment.yml                conda environment with the same pins
@@ -103,6 +103,8 @@ ls "$BLOCKGEO_WORKDIR/results_v3"
 With 12 training circuits the errors say nothing about the methods. The quick start only checks that the installation works.
 
 The notebook `examples/quickstart.ipynb` runs the same steps with 100 training circuits in about a minute on a CPU. It compares the unmitigated estimates, OLS, GNN-QEM and BlockGeo-QEM, and counts the blocks whose mitigated coordinates do not belong to a density matrix.
+
+To mitigate your own measurements, put the measured and ideal block coordinates of your training circuits and the measured coordinates of the circuits to mitigate into one `.npz` file and run `python examples/mitigate_own_data.py <file>.npz`. The script explains the array layout, and without an argument it runs on a small simulated example.
 
 ## Reproducing the results
 
