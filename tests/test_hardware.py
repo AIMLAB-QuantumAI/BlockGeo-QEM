@@ -113,4 +113,7 @@ def test_quench_run_reproduced(depth, monkeypatch):
         rows = stored[(stored["depth"] == depth) & (stored["method"] == name)].sort_values("draw")
         assert len(rows) == len(S), name
         for col, values in quench_hw.quantities(S).items():
-            np.testing.assert_allclose(rows[col].to_numpy(), values, rtol=0, atol=1e-10, err_msg=f"{name} {col}")
+            # purity and concurrence come from eigendecompositions of the projected block states, whose last digits
+            # depend on the CPU's instruction set (differences up to 2e-9 on CI runners); X and ZZ are linear
+            atol = 1e-7 if col in ("purity", "concurrence") else 1e-10
+            np.testing.assert_allclose(rows[col].to_numpy(), values, rtol=0, atol=atol, err_msg=f"{name} {col}")
