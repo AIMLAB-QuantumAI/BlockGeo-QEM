@@ -163,6 +163,8 @@ The simulated data are deterministic. The noise models come from the FakeSherbro
 
 ### Data
 
+`data/hardware/README.md` summarizes the runs and the file formats and shows how to load a run.
+
 `data/hardware` holds three runs on the 8-qubit chain 129, 118, 109, 110, 111, 98, 91, 92 of ibm_fez (logical qubit q is the q-th entry). Every circuit was measured in the nine covering settings, and every run adds two readout-calibration circuits (all qubits in |0⟩ and all in |1⟩, 4000 shots each). The Sampler used gate twirling and XY4 dynamical decoupling.
 
 | Directory | Circuits | Shots per setting |
