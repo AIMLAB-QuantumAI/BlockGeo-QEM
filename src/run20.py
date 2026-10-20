@@ -22,7 +22,7 @@ import measure_v3 as M
 import noise_layout as NL
 import sample_blocks as SB
 from bench import metrics
-from paths import FEAT_DIR, RES_DIR, TAG, feats_dir
+from paths import FEAT_DIR, RES_DIR, TAG, feats_dir, load_generated
 from v3 import Backbone, BlockGeoQEM2
 
 F20 = feats_dir(TAG + "_n20")                       # data of gen20.py (WORK/feats_v3_n20 by default)
@@ -31,7 +31,8 @@ F20 = feats_dir(TAG + "_n20")                       # data of gen20.py (WORK/fea
 def draws20(d, budget, n=20, seed=0):
     rng = lambda k: np.random.default_rng([seed, n, d, budget, k])
     shots = None if budget == 0 else budget
-    get = lambda part: dict(np.load(os.path.join(F20, f"tfim_n{n}_d{d}_{part}.npz")))
+    cmd = f"BLOCKGEO_CHAIN=<20-qubit chain of docs/reproduce.md> python src/gen20.py --n {n} --depths {d}"
+    get = lambda part: load_generated(os.path.join(F20, f"tfim_n{n}_d{d}_{part}.npz"), cmd)
     tr, te, cdr = get("train"), get("test"), get("cdr")
     return dict(tr=tr, te=te, cdr=cdr,
                 tr1=SB.measure_blocks(tr["S_s1"], n, shots, rng(0)),
@@ -42,7 +43,8 @@ def draws20(d, budget, n=20, seed=0):
 
 def source(n_src, d, budget, seed=0):
     """Training circuits of the n_src-qubit chain (gen_v3.py data), measured with the same block sampler."""
-    tr = dict(np.load(os.path.join(FEAT_DIR, f"tfim_n{n_src}_d{d}_train.npz")))
+    tr = load_generated(os.path.join(FEAT_DIR, f"tfim_n{n_src}_d{d}_train.npz"),
+                        f"python src/gen_v3.py --family tfim --n {n_src} --depths {d}")
     shots = None if budget == 0 else budget
     X = SB.measure_blocks(tr["S_s1"], n_src, shots, np.random.default_rng([seed, n_src, d, budget, 0]))
     return X, tr["S_ideal"]

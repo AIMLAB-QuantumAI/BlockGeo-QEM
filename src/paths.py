@@ -34,6 +34,17 @@ def cache_dir(tag=None):
     return os.path.join(WORK, "cache" + (TAG if tag is None else tag))
 
 
+def load_generated(path, command):
+    """np.load of a file written by a data generator, as a dict. A missing file stops the program with a message
+    that names the file and the generator command that writes it."""
+    import numpy as np
+
+    if not os.path.exists(path):
+        raise SystemExit(f"Missing input file {path}\nIt is written by: {command}\n"
+                         f"(run it with the same BLOCKGEO_WORKDIR and BLOCKGEO_* settings, see docs/reproduce.md)")
+    return dict(np.load(path))
+
+
 FEAT_DIR = feats_dir()
 RES_DIR = results_dir()
 CACHE_DIR = cache_dir()
