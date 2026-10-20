@@ -1,0 +1,22 @@
+name: blockgeo-qem
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      # Same pins as requirements.txt; the extra index makes torch==2.11.0 resolve to the CPU build 2.11.0+cpu on
+      # Linux and Windows (macOS arm64 gets the regular 2.11.0 wheel). For the CUDA build see the README.
+      - --extra-index-url https://download.pytorch.org/whl/cpu
+      - numpy==2.2.6
+      - scipy==1.15.2
+      - pandas==2.3.3
+      - scikit-learn==1.7.2
+      - torch==2.11.0
+      - tqdm==4.67.3
+      - qiskit==2.4.1
+      - qiskit-aer==0.17.2
+      - qiskit-ibm-runtime==0.48.0  # also ships the FakeSherbrooke/FakeTorino calibration snapshots
+      - matplotlib==3.10.8  # figures
+      - pytest==9.1.1  # tests

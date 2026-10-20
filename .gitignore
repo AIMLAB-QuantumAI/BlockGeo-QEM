@@ -1,0 +1,26 @@
+# Python caches and build files
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+
+# Generated data (BLOCKGEO_WORKDIR defaults to work/ in the repository root)
+/work/
+/feats*/
+/results*/
+/cache*/
+/logs*/
+
+# Credentials (the IBM Quantum account file is written to ~/.qiskit/qiskit-ibm.json)
+qiskit-ibm.json
+.env
+*.pem
+
+# OS files
+.DS_Store
+Thumbs.db

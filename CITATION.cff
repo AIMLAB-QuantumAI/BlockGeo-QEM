@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "BlockGeo-QEM"
+abstract: >-
+  Python code of BlockGeo-QEM, a quantum error-mitigation method in which a neural network
+  maps measured two-qubit block marginals of a qubit chain to density matrices and is trained
+  with the Bures distance. It contains the simulation pipeline, the baselines, the analysis
+  scripts and IBM Quantum hardware measurements.
+authors:
+  - family-names: "Lee"
+    given-names: "Jioh"
+    affiliation: "Korea University"
+  - family-names: "Yoon"
+    given-names: "Sung Whan"
+    affiliation: "UNIST"
+  - family-names: "Kim"
+    given-names: "Joongheon"
+    affiliation: "Korea University"
+repository-code: "https://github.com/AIMLAB-QuantumAI/BlockGeo-QEM"
+license: MIT
+version: "0.1.0"
+date-released: "2026-10-20"
