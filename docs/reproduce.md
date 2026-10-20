@@ -15,8 +15,8 @@ This guide lists, in order, every command that regenerates the simulated data, r
 **Device settings.** The commands below use two shell arrays (bash or zsh).
 
 ```bash
-TORINO=(BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48 BLOCKGEO_TAG=_v3_torino)
-CHAIN20=(BLOCKGEO_CHAIN=33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120)
+TORINO=(BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz "BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48" BLOCKGEO_TAG=_v3_torino)
+CHAIN20=("BLOCKGEO_CHAIN=33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120")
 ```
 
 `TORINO` selects the noise model of the FakeTorino snapshot (CZ gates) on a 10-qubit chain, which `find_chain.py torino cz 10 0.05` finds as the lowest-error path among qubits with readout error at most 5%. `CHAIN20` extends the default FakeSherbrooke chain to 20 qubits, and its first 10 qubits are the default chain.
@@ -354,7 +354,7 @@ The values of the tolerance, β, seed, training-set size and drift studies are t
 ## Notes
 
 - **20-qubit study.** The data come from the MPDO simulator and the block sampler instead of density matrices, and the study has no ZNE and no other multi-noise-level method. `test_mpdo.py` and `test_sample_blocks.py` compare both tools with the density-matrix data at n = 8.
-- **Second device.** Every command of the second device needs `BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48 BLOCKGEO_TAG=_v3_torino`. `paper_tables.py` and `paper_extra.py torino` read `results_v3_torino/` directly.
+- **Second device.** Every command of the second device needs `BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz "BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48" BLOCKGEO_TAG=_v3_torino`. `paper_tables.py` and `paper_extra.py torino` read `results_v3_torino/` directly.
 - **GPU.** A GPU is optional. The models use it whenever PyTorch finds one, and `GPU_FRAC` caps the memory of each process so that two jobs can share one card. `CUDA_VISIBLE_DEVICES=""` forces the CPU.
 - **Reproducibility.** The simulated data are deterministic for fixed library versions. The noise models come from the FakeSherbrooke and FakeTorino snapshots of qiskit-ibm-runtime 0.48.0. The neural methods depend on the device and on library versions through rounding, so expect agreement within the training variability that `run_seeds.py` measures, not bit for bit.
 - **Hardware files.** `compare_hw.py`, `quench_hw.py` and `analyze_quench_blocks.py hw` rewrite `results.csv`, `pred*.npz` and `blocks.csv` in `BLOCKGEO_HW_DIR`. Work on a copy to keep the shipped files unchanged.

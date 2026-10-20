@@ -2,10 +2,16 @@ name: tests
 
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   pytest:
@@ -22,3 +28,13 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run tests
         run: pytest -q
+
+  scripts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the syntax of the shell scripts
+        run: for f in scripts/*.sh; do bash -n "$f"; done
+      - name: Run ShellCheck on the shell scripts
+        run: shellcheck scripts/*.sh
