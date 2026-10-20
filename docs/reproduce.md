@@ -335,7 +335,7 @@ python src/find_chain.py sherbrooke ecr 33,39,40,41,53,60,59,58,71,77,78,79,91,9
 | `analyze_quench_blocks.py sim`, `hw ibm_fez` | site-resolved RMS errors of block purity, concurrence and ⟨X_i⟩ per method and depth |
 | `paper_review_checks.py purity` | mean block Bures distance of both models and their ratio per family and purity bin |
 | `paper_review_checks.py overlap` | disagreement of overlapping blocks on their shared qubit, fraction of unphysical estimates and size of the nearest-state projection, per method (TFIM n = 8, 10⁵ shots, depths 1, 3, 6) |
-| `paper_review_checks.py holm` | win/tie/loss counts of the first device at 10⁴ to 10⁶ shots before and after a Holm correction over all paired tests |
+| `paper_review_checks.py holm` | win/tie/loss counts per device at 10⁴ to 10⁶ shots before and after a Holm correction over all paired tests of the table (both devices when the second-device results exist) |
 | `paper_tables.py` | the rows of `tab_wtl.tex` |
 | `paper_tables.py numbers` | one- and eight-step comparison with GNN-QEM (uniform TFIM), median PEC sampling overhead γ², exact limit, spectral quantities, ablation ratios, size transfer and the number of trainable parameters of the BlockGeo-QEM network for n = 6, 8, 10, 20 |
 | `paper_tables.py cdr` | BlockGeo-QEM+CDR against OLS+CDR, BlockGeo-QEM against OLS+CDR, and BlockGeo-QEM+CDR against BlockGeo-QEM, as win/tie/loss counts and geometric-mean ratios |

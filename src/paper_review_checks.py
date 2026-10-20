@@ -8,7 +8,7 @@ purity   gain of the Bures loss resolved by the ideal purity of each block: mean
          geometry. Weight-matched control: at the maximally mixed state both losses equal ||ds||^2/4.
 overlap  overlapping blocks k and k+1 both estimate the single-qubit coordinates of qubit k+1; report their mean
          disagreement per method, and how much the nearest-state projection moves unphysical coordinate estimates.
-holm     outcomes of the simulated grid of tables/tab_wtl.tex (first device, 1e4-1e6 shots) after a Holm correction
+holm     outcomes of the simulated grid of tables/tab_wtl.tex (both devices, 1e4-1e6 shots) after a Holm correction
          over all its paired tests.
 """
 import os
@@ -88,10 +88,24 @@ def _proj(s):
 
 
 def holm():
+    """Holm correction over every paired test of tables/tab_wtl.tex: the three circuit families on the first device
+    and, when its results exist, uniform TFIM on the second device (results dir with the tag _v3_torino)."""
+    import glob
+
     import analyze_v3 as A
-    c = A.compare(A.load(), "BlockGeo-QEM")
-    c["budget"] = c.budget.astype(int)
-    c = c[c.budget.isin([10000, 100000, 1000000]) & c.metric.isin(["local_bures", "local_trace"])].copy()
+
+    def tests(df, device):
+        c = A.compare(df, "BlockGeo-QEM")
+        c["budget"] = c.budget.astype(int)
+        c = c[c.budget.isin([10000, 100000, 1000000]) & c.metric.isin(["local_bures", "local_trace"])].copy()
+        c["device"] = device
+        return c
+
+    parts = [tests(A.load(), "first device")]
+    tor = sorted(glob.glob(os.path.join(paths.results_dir("_v3_torino"), "*_samples.csv")))
+    if tor:
+        parts.append(tests(pd.concat([pd.read_csv(f) for f in tor], ignore_index=True), "second device"))
+    c = pd.concat(parts, ignore_index=True)
     order = np.argsort(c.p.values)
     m = len(c)
     adj = np.empty(m)
@@ -103,8 +117,9 @@ def holm():
     c["outcome_holm"] = np.where((c.ratio < 1) & (c.p_holm < .05), "win",
                                  np.where((c.ratio > 1) & (c.p_holm < .05), "loss", "tie"))
     wtl = lambda s: f"{(s == 'win').sum()}/{(s == 'tie').sum()}/{(s == 'loss').sum()}"
-    out = pd.concat([c.groupby(["family", "budget", "metric"]).outcome.apply(wtl).rename("uncorrected"),
-                     c.groupby(["family", "budget", "metric"]).outcome_holm.apply(wtl).rename("holm")], axis=1)
+    keys = ["device", "family", "budget", "metric"]
+    out = pd.concat([c.groupby(keys).outcome.apply(wtl).rename("uncorrected"),
+                     c.groupby(keys).outcome_holm.apply(wtl).rename("holm")], axis=1)
     return out, m
 
 
