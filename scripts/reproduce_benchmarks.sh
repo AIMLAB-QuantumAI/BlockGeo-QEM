@@ -24,8 +24,8 @@ cd "$REPO"
 # Default device and data version (FakeSherbrooke, WORK/results_v3). The second device and the 20-qubit chain are
 # selected per command below.
 unset BLOCKGEO_TAG BLOCKGEO_BACKEND BLOCKGEO_TWOQ BLOCKGEO_CHAIN
-TORINO=(BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48 BLOCKGEO_TAG=_v3_torino)
-CHAIN20=(BLOCKGEO_CHAIN=33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120)
+TORINO=(BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz "BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48" BLOCKGEO_TAG=_v3_torino)
+CHAIN20=("BLOCKGEO_CHAIN=33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120")
 
 # The hardware analyses below rewrite results.csv and pred*.npz, so they work on a copy of data/hardware.
 export BLOCKGEO_HW_DIR="${BLOCKGEO_HW_DIR:-$WORK/hardware}"

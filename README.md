@@ -40,7 +40,7 @@ BlockGeo-QEM/
 ├── tests/                         fast pytest tests
 ├── docs/reproduce.md              full reproduction guide
 ├── examples/                      quickstart.ipynb (small end-to-end example with outputs), mitigate_own_data.py
-├── .github/workflows/tests.yml    continuous integration (pytest on push and pull request)
+├── .github/workflows/tests.yml    continuous integration (pytest and a check of the shell scripts, on main and pull requests)
 ├── requirements.txt               pinned pip requirements
 ├── environment.yml                conda environment with the same pins
 ├── pytest.ini                     pytest settings (collects tests/ only)

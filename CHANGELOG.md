@@ -12,8 +12,10 @@ All notable changes to this project are listed here. Version numbers follow [sem
 - `data/hardware/README.md`, which describes the hardware runs and their files and shows how to load them.
 - `examples/mitigate_own_data.py`, which applies BlockGeo-QEM to block coordinates supplied by the user.
 - A `Makefile` with targets for the tests, the quick start, the example and the reproduction scripts.
+- A CI job that checks the shell scripts with `bash -n` and ShellCheck.
 
 ### Changed
+- CI runs on pushes to `main`, on pull requests and on demand, and cancels runs that a newer push supersedes; pushes to other branches no longer start a separate run.
 - Importing `qemlib` keeps thread settings chosen by the user; 4 threads remain the default (#11).
 - The data generators use at most as many worker processes as there are CPUs by default (#12).
 - The runners stop with a message that names a missing generated file and the command that writes it (#13).
