@@ -17,7 +17,7 @@ import baselines as B
 import baselines_v3 as B3
 import measure_v3 as M
 from bench import metrics
-from paths import FEAT_DIR, RES_DIR
+from paths import FEAT_DIR, RES_DIR, load_generated
 from run_v3 import draws
 from v3 import BlockGeoQEM2
 
@@ -38,7 +38,8 @@ def learners(n):
 
 def exp_datasize(fam, n, d, budget):
     D = draws(fam, n, d, budget)
-    x = dict(np.load(os.path.join(FEAT_DIR, f"{fam}_n{n}_d{d}_trainx.npz")))
+    x = load_generated(os.path.join(FEAT_DIR, f"{fam}_n{n}_d{d}_trainx.npz"),
+                       f"python src/gen_exp12.py --family {fam} --n {n} --depths {d}")
     s1 = None if budget == 0 else budget // 9
     Xx, _ = M.measure(x["Q_s1"], n, s1, np.random.default_rng([0, n, d, budget, 6]))
     X = np.concatenate([D["tr1"], Xx])
@@ -68,7 +69,8 @@ def exp_drift(fam, n, d, budget):
         if f == 1.0:
             te1, te3, cdr1, gamma = D["te1"], D["te3"], D["cdr1"], D["te"]["gamma"]
         else:
-            z = dict(np.load(os.path.join(FEAT_DIR, "drift", f"{fam}_n{n}_d{d}_f{f}.npz")))
+            z = load_generated(os.path.join(FEAT_DIR, "drift", f"{fam}_n{n}_d{d}_f{f}.npz"),
+                               f"python src/gen_exp12.py --family {fam} --n {n} --depths {d} --drift {f}")
             te1, _ = M.measure(z["Q_s1"], n, s1, rng(1))
             te3 = {s: M.measure(z[f"Q_s{s}"], n, s3, rng(20 + s))[0] for s in (1, 3, 5)}
             cdr1, _ = M.measure(z["cdr_Q_s1"], n, s1, rng(2))

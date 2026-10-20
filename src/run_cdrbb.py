@@ -16,14 +16,15 @@ import baselines as B
 import baselines_v3 as B3
 import measure_v3 as M
 from bench import metrics
-from paths import FEAT_DIR, RES_DIR
+from paths import FEAT_DIR, RES_DIR, load_generated
 from run_v3 import draws
 from v3 import BlockGeoQEM2
 
 
 def run(fam, n, d, budget):
     D = draws(fam, n, d, budget)
-    tc = dict(np.load(os.path.join(FEAT_DIR, f"{fam}_n{n}_d{d}_trcdr.npz")))
+    tc = load_generated(os.path.join(FEAT_DIR, f"{fam}_n{n}_d{d}_trcdr.npz"),
+                        f"python src/gen_v3_trcdr.py --family {fam} --n {n} --depths {d}")
     s1 = None if budget == 0 else budget // 9
     tr_nc, _ = M.measure(tc["Q_s1"], n, s1, np.random.default_rng([0, n, d, budget, 5]))
     cdr_tr = B3.cdr(tr_nc, tc["S_ideal"], D["tr1"])

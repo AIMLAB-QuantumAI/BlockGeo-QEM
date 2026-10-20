@@ -16,7 +16,7 @@ import baselines as B
 import baselines_v3 as B3
 import measure_v3 as M
 from bench import metrics
-from paths import FEAT_DIR, RES_DIR
+from paths import FEAT_DIR, RES_DIR, load_generated
 from v3 import BlockGeoQEM, BlockGeoQEM2
 
 SCALES = (1, 3, 5)
@@ -24,7 +24,8 @@ MAIN_BUDGET = 100000
 
 
 def load(fam, n, d):
-    get = lambda part: dict(np.load(os.path.join(FEAT_DIR, f"{fam}_n{n}_d{d}_{part}.npz")))
+    cmd = f"python src/gen_v3.py --family {fam} --n {n} --depths {d}"
+    get = lambda part: load_generated(os.path.join(FEAT_DIR, f"{fam}_n{n}_d{d}_{part}.npz"), cmd)
     return get("train"), get("test"), get("cdr"), get("cliff")
 
 
