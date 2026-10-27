@@ -1,7 +1,8 @@
-"""BlockGeo-QEM: learned mitigation of 2-qubit block states, trained in the Bures geometry.
+"""BlockGeo-QEM: learned mitigation of block states, trained in the Bures geometry.
 
 For each overlapping 2-qubit block k of an n-qubit chain, the measured Pauli coordinates x_k
 (9 covering settings; optionally at several fold scales) are mapped to a block density matrix.
+Blocks of b = 3 qubits (63 coordinates, 27 settings) use BlockGeoQEM(b=3).
 
   1. Backbone      s_lin,k = per-coordinate ridge of the noisy coordinate(s)   (CDR-like)
   2. Correction    f_theta(x_k, x_{k-1}, x_{k+1}, s_lin,k, pos_k, c)  with a circuit context
@@ -28,8 +29,8 @@ import qemlib as L
 if torch.cuda.is_available() and os.environ.get("GPU_FRAC"):
     torch.cuda.set_per_process_memory_fraction(float(os.environ["GPU_FRAC"]))
 
-BLOCK = 2                                    # qubits per block
-NS, DIM = 4 ** BLOCK - 1, 2 ** BLOCK         # 15 Pauli coordinates per block, block dimension 4
+BLOCK = 2                                    # default qubits per block (BlockGeoQEM(b=3) for three-qubit blocks)
+NS, DIM = 4 ** BLOCK - 1, 2 ** BLOCK         # 15 Pauli coordinates per block, block dimension 4 (b = 2)
 
 
 # ----------------------------- numpy helpers -----------------------------
@@ -38,9 +39,10 @@ def stack_scales(S, scales):
     return np.concatenate([S[k] for k in scales], axis=-1)  # [N, nb, 15*K]
 
 
-def coords_to_rho(S):
+def coords_to_rho(S, b=BLOCK):
+    d = 2 ** b
     flat = S.reshape(-1, S.shape[-1])
-    return np.stack([L.obs_to_rho(s, BLOCK) for s in flat]).reshape(*S.shape[:-1], DIM, DIM)
+    return np.stack([L.obs_to_rho(s, b) for s in flat]).reshape(*S.shape[:-1], d, d)
 
 
 def sqrtm_psd(R):
@@ -63,8 +65,8 @@ class Backbone:
     """Per-coordinate ridge regression of the ideal coordinate on its noisy value(s); one model per
     position id, pooling the blocks that share an id."""
 
-    def __init__(self, pos_mode="index", alphas=np.logspace(-8, 0, 17)):
-        self.pos_mode, self.alphas = pos_mode, alphas
+    def __init__(self, pos_mode="index", alphas=np.logspace(-8, 0, 17), ns=NS):
+        self.pos_mode, self.alphas, self.ns = pos_mode, alphas, ns      # ns = 4^b - 1 coordinates per block
 
     def fit(self, X, Y, K):
         self.K = K
@@ -72,16 +74,17 @@ class Backbone:
         self.models = {}
         for p in np.unique(pos):
             ks = np.where(pos == p)[0]
-            Xp, Yp = X[:, ks].reshape(-1, X.shape[2]), Y[:, ks].reshape(-1, NS)
-            self.models[p] = [RidgeCV(alphas=self.alphas).fit(Xp[:, j::NS][:, :K], Yp[:, j]) for j in range(NS)]
+            ns = self.ns
+            Xp, Yp = X[:, ks].reshape(-1, X.shape[2]), Y[:, ks].reshape(-1, ns)
+            self.models[p] = [RidgeCV(alphas=self.alphas).fit(Xp[:, j::ns][:, :K], Yp[:, j]) for j in range(ns)]
         return self
 
     def predict(self, X):
         pos = positions(X.shape[1], self.pos_mode)
-        out = np.empty(X.shape[:2] + (NS,))
+        out = np.empty(X.shape[:2] + (self.ns,))
         for k in range(X.shape[1]):
             ms = self.models[pos[k]]
-            out[:, k] = np.stack([m.predict(X[:, k, j::NS][:, :self.K]) for j, m in enumerate(ms)], -1)
+            out[:, k] = np.stack([m.predict(X[:, k, j::self.ns][:, :self.K]) for j, m in enumerate(ms)], -1)
         return out
 
 
@@ -108,13 +111,13 @@ def mlp(d_in, hidden, d_out, depth):
 
 
 class BlockNet(nn.Module):
-    def __init__(self, n_pos, f_in, out_dim, hidden=128, depth=2, emb=8, ctx=16, neighbors=True):
+    def __init__(self, n_pos, f_in, out_dim, hidden=128, depth=2, emb=8, ctx=16, neighbors=True, ns=NS):
         super().__init__()
         self.neighbors, self.ctx = neighbors, ctx
         self.emb = nn.Embedding(n_pos, emb)
         if ctx:
             self.phi = mlp(f_in + emb, hidden, ctx, 1)
-        d_in = f_in * (3 if neighbors else 1) + NS + emb + ctx
+        d_in = f_in * (3 if neighbors else 1) + ns + emb + ctx
         self.f = mlp(d_in, hidden, out_dim, depth)
         nn.init.zeros_(self.f[-1].weight)
         nn.init.zeros_(self.f[-1].bias)
@@ -138,15 +141,17 @@ class BlockNet(nn.Module):
 class BlockGeoQEM:
     def __init__(self, scales=(1,), output="chol", loss="bures", beta=0.3, hidden=128, depth=2, ctx=16,
                  neighbors=True, pos_mode="index", lr=1e-3, wd=1e-4, max_epochs=4000, patience=400,
-                 val_frac=0.2, seeds=(0, 1, 2), tol=None, device=None):
+                 val_frac=0.2, seeds=(0, 1, 2), tol=None, device=None, b=BLOCK):
         self.__dict__.update(locals())
         self.__dict__.pop("self")
         if tol is None:                      # coordinate-error tolerance of the validation check; inf = loss alone
             self.tol = float(os.environ.get("BLOCKGEO_TOL", "inf"))
-        self.ns, self.D = NS, DIM                                   # coordinates per block, block dimension
+        self.ns, self.D = 4 ** b - 1, 2 ** b                        # coordinates per block, block dimension
         self._tril = torch.tril_indices(self.D, self.D, offset=-1)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.P = torch.tensor(L.pauli_ops(BLOCK), dtype=torch.complex128, device=self.device)
+        if output == "coords" and loss == "bures" and b != 2:
+            raise ValueError("the coordinate-output Bures metric is implemented for two-qubit blocks only")
+        self.P = torch.tensor(L.pauli_ops(b), dtype=torch.complex128, device=self.device)
 
     # tensors
     def _T(self, X, B, Y=None):
@@ -156,11 +161,11 @@ class BlockGeoQEM:
         T = {"x": f32((X - self.mu) / self.sd), "base": f32(B),
              "pos": torch.as_tensor(positions(X.shape[1], self.pos_mode), device=dev)}
         if self.output == "chol":
-            T["A0"] = c128(np.linalg.cholesky(coords_to_rho(B) + 1e-6 * np.eye(self.D)))
+            T["A0"] = c128(np.linalg.cholesky(coords_to_rho(B, self.b) + 1e-6 * np.eye(self.D)))
         if Y is not None:
             T["Y"] = f32(Y)
             if self.output == "chol":
-                R = coords_to_rho(Y)
+                R = coords_to_rho(Y, self.b)
                 T["R"], T["sqrtR"] = c128(R), c128(sqrtm_psd(R))
             else:
                 G = GEO.metric_tensors(Y) if self.loss == "bures" else np.broadcast_to(
@@ -201,7 +206,7 @@ class BlockGeoQEM:
         torch.manual_seed(seed)
         n_pos = 3 if self.pos_mode == "boundary" else T["x"].shape[1]
         return BlockNet(n_pos, T["x"].shape[2], self.ns if self.output == "coords" else self.D ** 2, self.hidden,
-                        self.depth, ctx=self.ctx, neighbors=self.neighbors).to(self.device)
+                        self.depth, ctx=self.ctx, neighbors=self.neighbors, ns=self.ns).to(self.device)
 
     def _forward(self, net, T):
         return self._assemble(net(T["x"], T["base"], T["pos"]), T)
@@ -241,13 +246,13 @@ class BlockGeoQEM:
     def fit(self, S_train, Y_train):
         X = stack_scales(S_train, self.scales)
         K = len(self.scales)
-        self.backbone = Backbone(self.pos_mode).fit(X, Y_train, K)
+        self.backbone = Backbone(self.pos_mode, ns=self.ns).fit(X, Y_train, K)
         self.nets, self.best_eps = [], []
         for seed in self.seeds:
             perm = np.random.default_rng(seed).permutation(len(X))
             nva = int(round(self.val_frac * len(X)))
             va, tr = perm[:nva], perm[nva:]
-            bb = Backbone(self.pos_mode).fit(X[tr], Y_train[tr], K)
+            bb = Backbone(self.pos_mode, ns=self.ns).fit(X[tr], Y_train[tr], K)
             self.mu, self.sd = X[tr].mean((0, 1)), X[tr].std((0, 1)) + 1e-8
             _, ep = self._train(self._T(X[tr], bb.predict(X[tr]), Y_train[tr]),
                                 self._T(X[va], bb.predict(X[va]), Y_train[va]), seed=seed)
@@ -286,8 +291,8 @@ def project_states_t(R):
 
 
 class TwoHeadNet(BlockNet):
-    def __init__(self, n_pos, f_in, hidden=128, depth=2, emb=8, ctx=16, neighbors=True):
-        super().__init__(n_pos, f_in, NS + DIM ** 2, hidden, depth, emb, ctx, neighbors)
+    def __init__(self, n_pos, f_in, hidden=128, depth=2, emb=8, ctx=16, neighbors=True, ns=NS, nch=DIM ** 2):
+        super().__init__(n_pos, f_in, ns + nch, hidden, depth, emb, ctx, neighbors, ns=ns)
 
 
 class BlockGeoQEM2(BlockGeoQEM):
@@ -309,7 +314,7 @@ class BlockGeoQEM2(BlockGeoQEM):
         torch.manual_seed(seed)
         n_pos = 3 if self.pos_mode == "boundary" else T["x"].shape[1]
         return TwoHeadNet(n_pos, T["x"].shape[2], self.hidden, self.depth, ctx=self.ctx,
-                          neighbors=self.neighbors).to(self.device)
+                          neighbors=self.neighbors, ns=self.ns, nch=self.D ** 2).to(self.device)
 
     def _heads(self, out, T):
         s_c = T["base"] + out[..., :self.ns]

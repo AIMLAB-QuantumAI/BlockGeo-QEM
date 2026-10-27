@@ -1,6 +1,7 @@
 """Additional v3 baselines: Clifford data regression (CDR, vnCDR), idealised PEC, GNN-QEM.
 
-Shapes: block coordinates are [N, nb, 15]; CDR training sets are [N_test, K, nb, 15].
+Shapes: block coordinates are [N, nb, 4^b-1] (15 for two-qubit blocks); CDR training sets are [N_test, K, nb, 4^b-1].
+GNN-QEM reads two-qubit blocks; gnn_b3.py is its three-qubit version.
 """
 import itertools
 
@@ -39,26 +40,26 @@ def vncdr(train_noisy, train_ideal, test_noisy, scales=(1, 3, 5)):
 
 # ----------------------------- idealised PEC -----------------------------
 
-def coord_support(n):
+def coord_support(n, b=2):
     """Support qubits of every block coordinate, in the block-major order used everywhere."""
     out = []
-    for blk in L.contiguous_blocks(n, 2):
-        for st in L.local_pauli_strings(2, include_identity=False):
-            out.append(tuple(blk[1 - j] for j, c in enumerate(st) if c != "I"))
+    for blk in L.contiguous_blocks(n, b):
+        for st in L.local_pauli_strings(b, include_identity=False):
+            out.append(tuple(blk[b - 1 - j] for j, c in enumerate(st) if c != "I"))
     return out
 
 
-def pec(test_ideal, gamma, n, budget, rng, readout_scale):
+def pec(test_ideal, gamma, n, budget, rng, readout_scale, b=2):
     """PEC with exact knowledge of the twirled noise: an unbiased estimator whose single-shot values are
-    +-gamma_P, gamma_P = gamma_circuit * prod_{q in supp(P)} readout_scale[q]. Weight-1 strings get the shots of
-    3 settings, weight-2 strings of 1 setting (budget/9 shots per setting). budget=0 returns the ideal values."""
+    +-gamma_P, gamma_P = gamma_circuit * prod_{q in supp(P)} readout_scale[q]. A weight-w string of a b-qubit block
+    gets the shots of 3^(b-w) settings (budget/3^b shots per setting). budget=0 returns the ideal values."""
     if budget == 0:
         return test_ideal.copy()
     N, nb, ns = test_ideal.shape
-    sup = coord_support(n)
+    sup = coord_support(n, b)
     g_ro = np.array([np.prod([readout_scale[q] for q in s]) for s in sup]).reshape(nb, ns)
-    per = budget // 9                            # shots per covering setting; a weight-w string is in 3^(2-w) of them
-    shots = np.array([per * 3 ** (2 - len(s)) for s in sup]).reshape(nb, ns)
+    per = budget // 3 ** b                       # shots per covering setting; a weight-w string is in 3^(b-w) of them
+    shots = np.array([per * 3 ** (b - len(s)) for s in sup]).reshape(nb, ns)
     g = gamma[:, None, None] * g_ro[None]
     prob = np.clip((1 + test_ideal / g) / 2, 0, 1)
     k = rng.binomial(np.broadcast_to(shots, prob.shape), prob)

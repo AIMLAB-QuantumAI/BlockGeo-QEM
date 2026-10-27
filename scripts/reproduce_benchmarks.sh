@@ -23,11 +23,12 @@ cd "$REPO"
 # BlockGeo-QEM selects its training epochs by the held-out loss alone (the default of src/v3.py).
 unset BLOCKGEO_TOL
 
-# Default device and data version (FakeSherbrooke, WORK/results_v3). The second device and the 20-qubit chain are
-# selected per command below.
-unset BLOCKGEO_TAG BLOCKGEO_BACKEND BLOCKGEO_TWOQ BLOCKGEO_CHAIN
+# Default device, data version and block size (FakeSherbrooke, WORK/results_v3, two-qubit blocks). The second device,
+# the 20-qubit chain and the three-qubit blocks are selected per command below.
+unset BLOCKGEO_TAG BLOCKGEO_BACKEND BLOCKGEO_TWOQ BLOCKGEO_CHAIN BLOCKGEO_B
 TORINO=(BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz "BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48" BLOCKGEO_TAG=_v3_torino)
 CHAIN20=("BLOCKGEO_CHAIN=33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120")
+B3=(BLOCKGEO_TAG=_v3b3 BLOCKGEO_B=3)
 
 # The hardware analyses below rewrite results.csv and pred*.npz, so they work on a copy of data/hardware.
 export BLOCKGEO_HW_DIR="${BLOCKGEO_HW_DIR:-$WORK/hardware}"
@@ -121,7 +122,18 @@ done
 run env "${TORINO[@]}" python src/run_v3.py --part ours --family tfim --n 8 --budget 100000 --depths 1,2,3,4,6,8 \
   --methods "BlockGeo-QEM,abl: HS state loss"
 
-# 12. Hardware data of ibm_fez (no IBM account needed). Readout errors and unmitigated errors, the learned methods
+# 12. Three-qubit blocks, uniform and disordered TFIM, n = 8 (about 1.3 h). The ablations run at 1e5 shots. The
+#     graph network of --part base reads two-qubit blocks, so run_gnn_b3.py trains its three-qubit version.
+for fam in tfim dtfim; do
+  for B in 100000 10000; do
+    run env "${B3[@]}" python src/run_v3.py --part base --family "$fam" --n 8 --budget "$B" --depths 1,2,3,4,6,8
+    run env "${B3[@]}" python src/run_v3.py --part ours --family "$fam" --n 8 --budget "$B" --depths 1,2,3,4,6,8 \
+      --methods "BlockGeo-QEM,abl: HS state loss,abl: coordinate head only"
+    run env "${B3[@]}" python src/run_gnn_b3.py --family "$fam" --n 8 --budget "$B" --depths 1,2,3,4,6,8
+  done
+done
+
+# 13. Hardware data of ibm_fez (no IBM account needed). Readout errors and unmitigated errors, the learned methods
 #     trained on the measured training circuits, and the hardware quench (minutes).
 run python hardware/analyze_hw.py ibm_fez_d1_tr100_te30_s1000
 run python hardware/analyze_hw.py ibm_fez_d2_tr100_te30_s500

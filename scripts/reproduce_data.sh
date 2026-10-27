@@ -2,7 +2,7 @@
 # Generates the simulated circuit data of every study (density-matrix simulation with the noise models of the
 # FakeSherbrooke and FakeTorino snapshots, and the MPDO simulator for the 20-qubit chain).
 #
-# It takes about 40 hours of computing and 9.0 GB of disk space. The times below were measured with 6 to 12
+# It takes about 40 hours of computing and 10.5 GB of disk space. The times below were measured with 6 to 12
 # worker processes. The generators skip files that already exist, so the script can be restarted after an
 # interruption. The worker count does not change the data.
 #
@@ -22,11 +22,12 @@ export BLOCKGEO_WORKDIR="$WORK"
 cd "$REPO"
 WORKERS="${WORKERS:-8}"
 
-# Default device and data version (FakeSherbrooke, WORK/feats_v3). The second device and the 20-qubit chain are
-# selected per command below.
-unset BLOCKGEO_TAG BLOCKGEO_BACKEND BLOCKGEO_TWOQ BLOCKGEO_CHAIN
+# Default device, data version and block size (FakeSherbrooke, WORK/feats_v3, two-qubit blocks). The second device,
+# the 20-qubit chain and the three-qubit blocks are selected per command below.
+unset BLOCKGEO_TAG BLOCKGEO_BACKEND BLOCKGEO_TWOQ BLOCKGEO_CHAIN BLOCKGEO_B
 TORINO=(BLOCKGEO_BACKEND=torino BLOCKGEO_TWOQ=cz "BLOCKGEO_CHAIN=11,10,9,8,17,27,28,29,36,48" BLOCKGEO_TAG=_v3_torino)
 CHAIN20=("BLOCKGEO_CHAIN=33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120")
+B3=(BLOCKGEO_TAG=_v3b3 BLOCKGEO_B=3)
 
 exec > >(tee -a "$WORK/logs/reproduce_data.log") 2>&1
 run() { printf '\n[%s] %s\n' "$(date '+%F %T')" "$*"; "$@"; }
@@ -65,6 +66,12 @@ run env "${CHAIN20[@]}" python src/gen20.py --n 20 --depths 1,2,3 --workers "$WO
 # 5. Second device (FakeTorino), uniform TFIM, n = 6, 8, 10 (about 6.5 h; n = 10 takes about 5.6 h).
 for n in 6 8 10; do
   run env "${TORINO[@]}" python src/gen_v3.py --family tfim --n "$n" --depths 1,2,3,4,6,8 --workers "$WORKERS"
+done
+
+# 6. Three-qubit blocks (27 covering settings), uniform and disordered TFIM, n = 8, the circuits of step 1 (about
+#    30 min). The data go to WORK/feats_v3b3.
+for fam in tfim dtfim; do
+  run env "${B3[@]}" python src/gen_v3.py --family "$fam" --n 8 --depths 1,2,3,4,6,8 --workers "$WORKERS"
 done
 
 printf '\n[%s] data generation finished in %s\n' "$(date '+%F %T')" "$WORK"

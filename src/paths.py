@@ -2,12 +2,13 @@
 
 REPO       repository root (the parent directory of src/)
 WORK       working directory for all generated data: $BLOCKGEO_WORKDIR, default REPO/work
-TAG        data version, $BLOCKGEO_TAG (default "_v3"; the second-device runs use "_v3_torino")
+TAG        data version, $BLOCKGEO_TAG (default "_v3"; the second-device runs use "_v3_torino", the three-qubit
+           blocks "_v3b3")
 FEAT_DIR   WORK/feats<TAG>      simulated circuit data of the gen_*.py scripts
 RES_DIR    WORK/results<TAG>    per-sample results of the runners and analyses (predictions in RES_DIR/pred)
 CACHE_DIR  WORK/cache<TAG>      reserved for caches (no script writes it at present)
 FIG_DIR    WORK/figures         figures of paper_figs.py
-TAB_DIR    WORK/tables          tables of paper_tables.py
+TAB_DIR    WORK/tables          tables of paper_tables.py and paper_b3.py
 LOG_DIR    WORK/logs            logs of scripts/reproduce_*.sh (no Python script writes it)
 HW         hardware measurements: $BLOCKGEO_HW_DIR, default REPO/data/hardware (read and written by hardware/*.py)
 

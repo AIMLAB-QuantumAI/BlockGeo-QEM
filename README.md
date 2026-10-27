@@ -23,6 +23,7 @@ BlockGeo-QEM/
 │   ├── v3.py                      BlockGeo-QEM (class BlockGeoQEM2) and its ablations
 │   ├── baselines.py               ZNE, per-coordinate linear regression, random forest, MLP-QEM
 │   ├── baselines_v3.py            CDR, vnCDR, idealised PEC, GNN-QEM
+│   ├── gnn_b3.py                  GNN-QEM for blocks of three qubits
 │   ├── measure_v3.py              finite-shot measurement with readout errors and readout-error mitigation
 │   ├── shots.py, readout.py       block Pauli estimates from the covering settings, tensored readout errors and REM
 │   ├── geometry.py                Bures metric in Pauli coordinates
@@ -114,8 +115,8 @@ To mitigate your own measurements, put the measured and ideal block coordinates 
 Three scripts run the full pipeline in order. They can be started from any directory and write everything to `BLOCKGEO_WORKDIR` (default `work/`). The generators skip finished files and the runners skip finished depths, so a rerun after an interruption continues where it stopped; only `run_quench.py` and the analyses start again.
 
 ```bash
-scripts/reproduce_data.sh         # simulated circuit data, about 40 h and 9.0 GB
-scripts/reproduce_benchmarks.sh   # every method and study, about 45 h
+scripts/reproduce_data.sh         # simulated circuit data, about 40 h and 10.5 GB
+scripts/reproduce_benchmarks.sh   # every method and study, about 46 h
 scripts/reproduce_figures.sh      # win/tie/loss table, figures and printed statistics, about 15 min
 ```
 
@@ -133,6 +134,7 @@ The table and the figures are written by the analysis scripts in `src/`. Paths a
 | `figures/robust.pdf` | Size transfer to n = 10, training-set size and calibration drift (TFIM, 10⁵ shots, the last two at three Trotter steps) | `paper_figs.py robust` | `run_transfer.py`, `run_exp12.py`, main grid |
 | `figures/n20_B100000.pdf` | 20-qubit chain, local Bures and trace distance for Trotter steps 1 to 3, including models transferred from n = 10 | `paper_figs.py n20` | `gen20.py`, `run20.py` |
 | `figures/hardware.pdf` | ibm_fez runs (local Bures and trace distance of the unmitigated estimate and the learned methods at one and two Trotter steps) and the RMS block-purity error of the quench circuit in simulation and on hardware | `analyze_quench_blocks.py sim` and `hw ibm_fez`, then `paper_figs.py hardware` | `hardware/compare_hw.py`, `hardware/quench_hw.py`, `run_quench.py` |
+| `tables/tab_b3.tex`, `tables/tab_b3_dtfim.tex`, `tables/tab_b3_gain_both.tex` | Two- against three-qubit blocks (uniform and disordered TFIM, n = 8): error ratio of BlockGeo-QEM to the best baseline at 10⁴ and 10⁵ shots, and the Bures-distance ratio of the Hilbert-Schmidt-trained model to BlockGeo-QEM by ideal block purity and by smallest eigenvalue | `paper_b3.py` | main grid, `--tag nl` runs, three-qubit-block runs |
 
 The other studies are reported as printed statistics or as CSV files of the runners.
 
@@ -152,13 +154,14 @@ The other studies are reported as printed statistics or as CSV files of the runn
 | Training seeds | `run_seeds.py` | `results_v3/seeds_tfim_n8_B100000_samples.csv` |
 | Second device (FakeTorino) | `gen_v3.py` and `run_v3.py` with the FakeTorino settings | `paper_extra.py torino` |
 | 20-qubit chain (MPDO simulator) | `gen20.py`, `run20.py` | `paper_extra.py n20` |
+| Three-qubit blocks (uniform and disordered TFIM, n = 8) | `gen_v3.py`, `run_v3.py` and `run_gnn_b3.py` with `BLOCKGEO_TAG=_v3b3 BLOCKGEO_B=3` | `paper_b3.py` |
 | Quench of a fixed-angle TFIM circuit | `run_quench.py`, `hardware/quench_hw.py` | printed chain averages, `analyze_quench_blocks.py` |
 | Hardware experiment on ibm_fez | `hardware/compare_hw.py`, `hardware/analyze_hw.py` | printed error ratios, Wilcoxon p-values and readout errors |
 | Checks of the 20-qubit simulator and the block sampler | `test_mpdo.py`, `test_sample_blocks.py` | printed (`gen20.py` prints the bond dimensions) |
 | Chain of the second device | `find_chain.py torino cz 10 0.05` | printed |
 | Two-qubit and readout errors of the FakeSherbrooke chain and of its 20-qubit extension | `find_chain.py sherbrooke ecr` with the 20-qubit chain | printed |
 
-[docs/reproduce.md](docs/reproduce.md) lists every command in order with its outputs, the size of the generated data (about 9.0 GB, plus 0.2 GB of results) and the run times.
+[docs/reproduce.md](docs/reproduce.md) lists every command in order with its outputs, the size of the generated data (about 10.5 GB, plus 0.2 GB of results) and the run times.
 
 ### Reproducibility
 
@@ -247,10 +250,11 @@ These are the variables that the code in `src/` and `hardware/` reads.
 |---|---|---|---|
 | `BLOCKGEO_WORKDIR` | `src/paths.py` | `<repository>/work` | directory of all generated data, results, figures, tables and logs |
 | `BLOCKGEO_HW_DIR` | `src/paths.py` | `<repository>/data/hardware` | hardware data read and written by `hardware/*.py`, `analyze_quench_blocks.py hw` and `paper_figs.py hardware` |
-| `BLOCKGEO_TAG` | `src/paths.py` | `_v3` | suffix of the data and results directories (`feats<TAG>`, `results<TAG>`); `_v3_torino` for the second device. Leave it unset for the analysis scripts. |
+| `BLOCKGEO_TAG` | `src/paths.py` | `_v3` | suffix of the data and results directories (`feats<TAG>`, `results<TAG>`); `_v3_torino` for the second device, `_v3b3` for three-qubit blocks. Leave it unset for the analysis scripts. |
 | `BLOCKGEO_BACKEND` | `src/noise_layout.py` | `sherbrooke` | fake backend whose calibration defines the noise model (`torino` for the second device) |
 | `BLOCKGEO_TWOQ` | `src/noise_layout.py` | `ecr` | native two-qubit gate of that backend (`cz` for the second device) |
 | `BLOCKGEO_CHAIN` | `src/noise_layout.py` | `33,39,40,41,53,60,59,58,71,77` | physical qubits of the chain; a run with n qubits uses the first n |
+| `BLOCKGEO_B` | `src/gen_v3.py`, `src/run_v3.py` | `2` | qubits per block; `3` measures blocks of three neighbouring qubits in 27 covering settings (set it together with `BLOCKGEO_TAG=_v3b3`) |
 | `BLOCKGEO_TOL` | `src/v3.py` | `inf` | tolerance of the validation check: a finite value such as `0.02` also excludes epochs whose held-out coordinate error exceeds (1 + tolerance) times that of the projected linear estimate; `inf` selects epochs by the held-out loss alone |
 | `GPU_FRAC` | `src/v3.py` | unset | if set, the fraction of GPU memory one process may allocate |
 | `OMP_NUM_THREADS` | `src/gen_v3.py`, `gen_v3_trcdr.py`, `gen_exp12.py`, `gen20.py` | `1` if unset | threads of the linear-algebra libraries in the data generators, which set it before numpy is imported |

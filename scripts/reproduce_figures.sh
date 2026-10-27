@@ -3,6 +3,7 @@
 #
 # Takes about 10 to 15 minutes in total and writes
 #   $BLOCKGEO_WORKDIR/tables/tab_wtl.tex     win/tie/loss table
+#   $BLOCKGEO_WORKDIR/tables/tab_b3*.tex     two- against three-qubit blocks
 #   $BLOCKGEO_WORKDIR/figures/*.pdf          main_tfim, geometry, spectral, robust, n20_B100000, hardware,
 #                                            unstructured_B100000
 #   $BLOCKGEO_WORKDIR/logs/reproduce_figures.log   every printed statistic
@@ -21,8 +22,8 @@ WORK="$(cd "$WORK" && pwd)"
 export BLOCKGEO_WORKDIR="$WORK"
 cd "$REPO"
 
-# The analyses read the default data version (WORK/results_v3) and WORK/results_v3_torino.
-unset BLOCKGEO_TAG BLOCKGEO_BACKEND BLOCKGEO_TWOQ BLOCKGEO_CHAIN
+# The analyses read the default data version (WORK/results_v3), WORK/results_v3_torino and WORK/results_v3b3.
+unset BLOCKGEO_TAG BLOCKGEO_BACKEND BLOCKGEO_TWOQ BLOCKGEO_CHAIN BLOCKGEO_B
 
 export BLOCKGEO_HW_DIR="${BLOCKGEO_HW_DIR:-$WORK/hardware}"
 if [ ! -d "$BLOCKGEO_HW_DIR" ]; then
@@ -49,6 +50,7 @@ run python src/paper_tables.py numbers
 run python src/paper_tables.py cdr
 run python src/paper_tables.py marginals
 run python src/paper_extra.py torino n20
+run python src/paper_b3.py       # two- against three-qubit blocks, tables/tab_b3*.tex
 run python src/analyze_nl.py
 run python src/analyze_v3.py      # per-setting comparison with the best baseline, results_v3/compare_BlockGeo-QEM.csv
 
