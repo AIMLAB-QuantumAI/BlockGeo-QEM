@@ -1,11 +1,11 @@
 """Device layout for the corrected noise simulation.
 
-The workshop pipeline transpiled CX(i, i+1) against a simulator without a coupling map, so every
-ECR was emitted as ECR(i, i+1). FakeSherbrooke defines most ECR errors only for the reverse
-direction, so those gates ran without two-qubit noise, and the chain 0..9 also contains couplers
-calibrated as broken (error 1.0). Here the circuits run on a chain of good qubits chosen on the
-heavy-hex coupling graph, the noise model is re-indexed to logical qubits 0..n-1, and circuits are
-transpiled with the directed coupling map so each ECR carries its calibrated error.
+Transpiling CX(i, i+1) against a simulator without a coupling map emits every ECR as ECR(i, i+1).
+FakeSherbrooke defines most ECR errors only for the reverse direction, so those gates would run
+without two-qubit noise, and the chain 0..9 also contains couplers calibrated as broken (error 1.0).
+Here the circuits run on a chain of good qubits chosen on the heavy-hex coupling graph, the noise
+model is re-indexed to logical qubits 0..n-1, and circuits are transpiled with the directed coupling
+map so each ECR carries its calibrated error.
 """
 import os
 

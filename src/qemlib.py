@@ -1,7 +1,7 @@
 """Shared helpers of BlockGeo-QEM: circuit ensembles, reduced block states, Pauli coordinates and state metrics.
 
-Simulation primitives are imported from the workshop implementation (blockgeo_qem_fixed.py, the BlockGeo-v1 code)
-so that circuits, noise model and conventions stay identical to it.
+Simulation primitives are imported from blockgeo_qem_fixed.py (the BlockGeo-v1 code) so that circuits, noise model
+and conventions stay identical to it.
 """
 import numpy as np
 
@@ -21,7 +21,7 @@ from blockgeo_qem_fixed import (
 
 
 # ------------------------------------------------------------------
-# Circuit sets (same RNG streams as the workshop paper)
+# Circuit sets (same RNG streams as the BlockGeo-v1 code)
 # ------------------------------------------------------------------
 
 def paper_seed(n, depth, split, seed=0):
@@ -64,7 +64,7 @@ def make_circuits(family, n, depth, num, split, seed=0):
 
 
 # ------------------------------------------------------------------
-# Reduced states and Pauli coordinates (conventions of the workshop code)
+# Reduced states and Pauli coordinates (conventions of the BlockGeo-v1 code)
 # ------------------------------------------------------------------
 # Qiskit is little-endian: qubit q is bit q of the basis index, i.e. tensor axis
 # n-1-q. In a block's Pauli string, position j acts on block[b-1-j] (np.kron puts

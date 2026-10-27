@@ -1,5 +1,6 @@
-"""BlockGeo-v1, the workshop model of blockgeo_qem_fixed.py, trained and evaluated on finite-shot block estimates
-(the BlockGeo-v1 baseline of run_v3.py)."""
+"""BlockGeo-v1, the direct network of blockgeo_qem_fixed.py (squared-error, classical-fidelity and Bures losses, no
+backbone or physical parametrization), trained and evaluated on finite-shot block estimates (the BlockGeo-v1
+baseline of run_v3.py)."""
 import numpy as np
 
 
@@ -11,7 +12,7 @@ def paper_nn_shots(trS, trP, tr, teS, teP, te, n, variant, seed=0):
     mk = lambda S, P, f: DatasetPack(noisy_p=P, ideal_p=f["P_ideal"], noisy_obs=S.reshape(len(S), -1),
                                      ideal_obs=f["S_ideal"].reshape(len(S), -1))
     dev = "cuda" if torch.cuda.is_available() else "cpu"
-    # The workshop loss differentiates through eigenvectors (torch.linalg.eigh), which can raise on
+    # The BlockGeo-v1 loss differentiates through eigenvectors (torch.linalg.eigh), which can raise on
     # (near-)degenerate spectra; retry with another seed before giving up.
     for attempt in range(3):
         torch.manual_seed(seed + attempt)

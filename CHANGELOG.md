@@ -19,6 +19,7 @@ All notable changes to this project are listed here. Version numbers follow [sem
 - `paper_figs.py budget`, the error ratio of BlockGeo-QEM to the best baseline against the shot budget, and `fig_metric_dome.py`, the Bures geometry of a qubit section.
 
 ### Changed
+- The documentation and docstrings describe BlockGeo-v1 by its construction, a direct network without backbone or physical parametrization; the method name in the result files is unchanged.
 - The main figure also shows the trace distance at 10⁴ shots, and the hardware figure labels the Hilbert-Schmidt-trained model "HS state loss" as the geometry figure does.
 - BlockGeo-QEM chooses the number of training epochs by the held-out loss alone, the rule of the final results. The earlier default, which also required the held-out coordinate error to stay within 2% of that of the projected linear estimate, is available with `BLOCKGEO_TOL=0.02` or `tol=0.02`, and `run_tol.py` runs it explicitly.
 - CI runs on pushes to `main`, on pull requests and on demand, and cancels runs that a newer push supersedes; pushes to other branches no longer start a separate run.
