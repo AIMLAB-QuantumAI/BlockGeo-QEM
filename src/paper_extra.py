@@ -1,5 +1,6 @@
-"""Second device (WORK/results_v3_torino) and 20-qubit chain (<results dir>/n20_*): BlockGeo-QEM against the best
-baseline, paired Wilcoxon over the 50 test circuits at the 5% level, as in tables/tab_wtl.tex. GNN trunk
+"""Second device (WORK/results_v3_torino) and 20-qubit chain (<results dir>/n20_*), per circuit family: BlockGeo-QEM
+against the best baseline, paired Wilcoxon over the 50 test circuits at the 5% level, as in tables/tab_wtl.tex.
+For the 20-qubit chain also the errors of the model transferred from n = 10 on the two halves of the chain. GNN trunk
 (<results dir>/gnnb_*, run_gnnb.py): error ratios to BlockGeo-QEM and to GNN-QEM.
 
 usage: paper_extra.py [torino] [n20] [gnnb]      (default: all)
@@ -14,8 +15,10 @@ from scipy.stats import wilcoxon
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import analyze_v3 as A
 import paths
+import qemlib as L
 
 MET = ["local_bures", "local_trace", "mae_off", "mae_diag", "err_purity", "err_concurrence"]
+FAMILY = {"tfim": "uniform TFIM", "dtfim": "disordered TFIM"}
 
 
 def compare(df, ours, baselines, mets=MET, alpha=0.05):
@@ -46,36 +49,70 @@ def torino():
     R = paths.results_dir("_v3_torino") + os.sep
     fs = [R + f for f in sorted(os.listdir(R)) if f.endswith("_samples.csv")]
     df = pd.concat([pd.read_csv(f) for f in fs], ignore_index=True)
-    c = compare(df, "BlockGeo-QEM", A.BASELINES)
-    print("== ibm_torino (CZ), uniform TFIM, all chain lengths pooled\n" + summary(c).to_string())
-    print(c[c.metric == "local_bures"].pivot_table(index="budget", columns="depth", values="ratio").round(2))
-    print(c[c.metric == "local_bures"].pivot_table(index="budget", columns="depth", values="best", aggfunc="first"))
-    abl = df[df.method.isin(["BlockGeo-QEM", "abl: HS state loss"])].groupby(["budget", "method", "depth"])
-    print(abl.local_bures.mean().unstack().round(4))
-    if c.n.nunique() > 1:                               # the same tables for every chain length
-        for n, cn in c.groupby("n"):
-            print(f"== ibm_torino (CZ), uniform TFIM n={n}\n" + summary(cn).to_string())
-            print(cn[cn.metric == "local_bures"].pivot_table(index="budget", columns="depth", values="ratio").round(2))
-            print(cn[cn.metric == "local_bures"].pivot_table(index="budget", columns="depth", values="best",
+    out = []
+    for fam in [f for f in FAMILY if f in set(df.family)]:
+        dff = df[df.family == fam]
+        c = compare(dff, "BlockGeo-QEM", A.BASELINES)
+        groups = [(f"{FAMILY[fam]}, all chain lengths pooled", c, dff)]
+        if c.n.nunique() > 1:                           # the same tables for every chain length
+            groups += [(f"{FAMILY[fam]} n={n}", cn, dff[dff.n == n]) for n, cn in c.groupby("n")]
+        for title, cg, dg in groups:
+            print(f"== ibm_torino (CZ), {title}\n" + summary(cg).to_string())
+            print(cg[cg.metric == "local_bures"].pivot_table(index="budget", columns="depth", values="ratio").round(2))
+            print(cg[cg.metric == "local_bures"].pivot_table(index="budget", columns="depth", values="best",
                                                              aggfunc="first"))
-            dn = df[(df.n == n) & df.method.isin(["BlockGeo-QEM", "abl: HS state loss"])]
-            print(dn.groupby(["budget", "method", "depth"]).local_bures.mean().unstack().round(4))
-    return c
+            abl = dg[dg.method.isin(["BlockGeo-QEM", "abl: HS state loss"])]
+            print(abl.groupby(["budget", "method", "depth"]).local_bures.mean().unstack().round(4))
+        out.append(c)
+    return pd.concat(out)
+
+
+def half_chain(fam, R, method="BlockGeo-QEM (transfer 10->20)"):
+    """Errors of the model transferred from n = 10 on the two halves of the 20-qubit chain: blocks 0-8 lie on the
+    default 10-qubit chain of the training circuits, blocks 10-18 on the added qubits 10-19 (block 9 straddles both).
+    Mean over test circuits of the RMS block Bures distance and of the mean block trace distance of each half."""
+    key = method.replace(" ", "_").replace(">", "")
+    rows = []
+    for f in sorted(os.listdir(R + "pred")):
+        if not (f.startswith(f"n20_{fam}_B") and f.endswith(".npz")):
+            continue
+        budget, depth = f[len(f"n20_{fam}_B"):-4].split("_d")
+        z = np.load(R + "pred/" + f)
+        if key not in z.files:
+            continue
+        Y, S = z["__ideal__"], z[key]
+        rho = lambda X, i, k: L.obs_to_rho(X[i, k], 2)
+        bs = np.array([[max(L.bures_sq(rho(Y, i, k), rho(S, i, k)), 0.0) for k in range(Y.shape[1])]
+                       for i in range(len(Y))])
+        td = np.array([[L.trace_dist(rho(Y, i, k), rho(S, i, k)) for k in range(Y.shape[1])] for i in range(len(Y))])
+        for met, old, new in (("local_bures", np.sqrt(bs[:, :9].mean(1)).mean(), np.sqrt(bs[:, 10:].mean(1)).mean()),
+                              ("local_trace", td[:, :9].mean(), td[:, 10:].mean())):
+            rows.append(dict(budget=int(budget), depth=int(depth), metric=met, qubits_0_9=old, qubits_10_19=new,
+                             ratio=new / old))
+    if rows:
+        t = pd.DataFrame(rows).sort_values(["budget", "metric", "depth"])
+        print(f"== {FAMILY[fam]} n=20, {method} on the two halves of the chain (largest deviation of the ratio from 1: "
+              f"{np.abs(t.ratio - 1).max():.3f})\n" + t.round(4).to_string(index=False))
 
 
 def n20():
     R = paths.RES_DIR + os.sep
     fs = [R + f for f in sorted(os.listdir(R)) if f.startswith("n20_") and f.endswith("_samples.csv")]
     df = pd.concat([pd.read_csv(f) for f in fs], ignore_index=True)
-    base = [m for m in df.method.unique() if "BlockGeo" not in m and not m.startswith("abl")]
     out = []
-    for ours in [m for m in df.method.unique() if m.startswith("BlockGeo")]:
-        out.append(compare(df, ours, base))
-    c = pd.concat(out)
-    print("== uniform TFIM n=20 (tensor-network data)\n" + summary(c).to_string())
-    print(df.groupby(["budget", "method", "depth"]).local_bures.mean().unstack().round(4).to_string())
-    return c
-
+    for fam in [f for f in FAMILY if f in set(df.family)]:
+        dff = df[df.family == fam]
+        base = [m for m in dff.method.unique() if "BlockGeo" not in m and not m.startswith("abl")]
+        c = pd.concat([compare(dff, ours, base) for ours in dff.method.unique() if ours.startswith("BlockGeo")])
+        print(f"== {FAMILY[fam]} n=20 (tensor-network data)\n" + summary(c).to_string())
+        co = c[c.ours == "BlockGeo-QEM"]
+        print("BlockGeo-QEM trained at n=20 over the best baseline, ratio and outcome per depth")
+        print(co.pivot_table(index=["budget", "metric"], columns="depth", values="ratio").round(2).to_string())
+        print(co.pivot_table(index=["budget", "metric"], columns="depth", values="outcome", aggfunc="first").to_string())
+        print(dff.groupby(["budget", "method", "depth"]).local_bures.mean().unstack().round(4).to_string())
+        half_chain(fam, R)
+        out.append(c)
+    return pd.concat(out)
 
 
 def gnnb():

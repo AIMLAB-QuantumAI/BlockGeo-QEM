@@ -116,8 +116,8 @@ To mitigate your own measurements, put the measured and ideal block coordinates 
 Three scripts run the full pipeline in order. They can be started from any directory and write everything to `BLOCKGEO_WORKDIR` (default `work/`). The generators skip finished files and the runners skip finished depths, so a rerun after an interruption continues where it stopped; only `run_quench.py` and the analyses start again.
 
 ```bash
-scripts/reproduce_data.sh         # simulated circuit data, about 40 h and 10.5 GB
-scripts/reproduce_benchmarks.sh   # every method and study, about 47 h
+scripts/reproduce_data.sh         # simulated circuit data, about 47 h and 12.0 GB
+scripts/reproduce_benchmarks.sh   # every method and study, about 49 h
 scripts/reproduce_figures.sh      # win/tie/loss table, figures and printed statistics, about 15 min
 ```
 
@@ -127,7 +127,7 @@ The table and the figures are written by the analysis scripts in `src/`. Paths a
 
 | Output | Content | Analysis | Runs it needs |
 |---|---|---|---|
-| `tables/tab_wtl.tex` | Win/tie/loss counts over the six depths and geometric-mean error ratio of BlockGeo-QEM against the best baseline, for the local Bures and trace distances at 10⁴, 10⁵ and 10⁶ shots, every circuit family and n = 6, 8, 10, and uniform TFIM on the second device | `paper_tables.py` | main grid, second device |
+| `tables/tab_wtl.tex` | Win/tie/loss counts over the six depths and geometric-mean error ratio of BlockGeo-QEM against the best baseline, for the local Bures and trace distances at 10⁴, 10⁵ and 10⁶ shots, every circuit family and n = 6, 8, 10, and uniform and disordered TFIM on the second device | `paper_tables.py` | main grid, second device |
 | `figures/main_tfim.pdf` | Uniform TFIM, local Bures and trace distance against Trotter steps at 10⁵ shots and Bures distance at 10⁴ shots, n = 6, 8, 10 | `paper_figs.py main` | main grid |
 | `figures/unstructured_B100000.pdf` | Local Bures distance of disordered TFIM and random circuits at 10⁵ shots | `paper_figs.py unstructured` | main grid |
 | `figures/geometry.pdf` | Ablations of the state head and the GNN trunk, block Bures distance in bins of ideal block purity for the Hilbert-Schmidt-trained and the Bures-trained model, and the sweep of the weight β (TFIM n = 8, 10⁵ shots) | `paper_review_checks.py purity`, then `paper_figs.py geometry` | main grid, `--tag nl` runs, `run_beta.py`, `run_gnnb.py` |
@@ -154,8 +154,8 @@ The other studies are reported as printed statistics or as CSV files of the runn
 | Tolerance of the validation check | `run_tol.py` | `results_v3/tol_*_samples.csv` (selected epochs in column `epochs`) |
 | Weight β, training-set size, calibration drift | `run_beta.py`, `gen_exp12.py`, `run_exp12.py` | `results_v3/beta_*`, `datasize_*` and `drift_*` CSV files |
 | Training seeds | `run_seeds.py` | `results_v3/seeds_tfim_n8_B100000_samples.csv` |
-| Second device (FakeTorino) | `gen_v3.py` and `run_v3.py` with the FakeTorino settings | `paper_extra.py torino` |
-| 20-qubit chain (MPDO simulator) | `gen20.py`, `run20.py` | `paper_extra.py n20` |
+| Second device (FakeTorino), uniform and disordered TFIM | `gen_v3.py` and `run_v3.py` with the FakeTorino settings | `paper_extra.py torino` |
+| 20-qubit chain (MPDO simulator), uniform and disordered TFIM | `gen20.py`, `run20.py` (`--family`) | `paper_extra.py n20` |
 | Three-qubit blocks (uniform and disordered TFIM, n = 8) | `gen_v3.py`, `run_v3.py` and `run_gnn_b3.py` with `BLOCKGEO_TAG=_v3b3 BLOCKGEO_B=3` | `paper_b3.py` |
 | Quench of a fixed-angle TFIM circuit | `run_quench.py`, `hardware/quench_hw.py` | printed chain averages, `analyze_quench_blocks.py` |
 | Hardware experiment on ibm_fez | `hardware/compare_hw.py`, `hardware/analyze_hw.py` | printed error ratios, Wilcoxon p-values and readout errors |
@@ -163,7 +163,7 @@ The other studies are reported as printed statistics or as CSV files of the runn
 | Chain of the second device | `find_chain.py torino cz 10 0.05` | printed |
 | Two-qubit and readout errors of the FakeSherbrooke chain and of its 20-qubit extension | `find_chain.py sherbrooke ecr` with the 20-qubit chain | printed |
 
-[docs/reproduce.md](docs/reproduce.md) lists every command in order with its outputs, the size of the generated data (about 10.5 GB, plus 0.2 GB of results) and the run times.
+[docs/reproduce.md](docs/reproduce.md) lists every command in order with its outputs, the size of the generated data (about 12.0 GB, plus 0.2 GB of results) and the run times.
 
 ### Reproducibility
 

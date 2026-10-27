@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs every mitigation method on the data of reproduce_data.sh and re-analyses the shipped hardware measurements.
 #
-# It takes about 47 hours of computing. The times below were measured with one GPU for training. Training on a
+# It takes about 49 hours of computing. The times below were measured with one GPU for training. Training on a
 # CPU takes longer. Every runner except run_quench.py appends to its CSV file after each depth and skips depths
 # that are already there, so the script can be restarted after an interruption.
 #
@@ -96,14 +96,18 @@ run python src/run_seeds.py --family tfim --n 8 --budget 100000 --depths 1,2,3,4
 run python src/run_exp12.py --exp datasize --family tfim --n 8 --budget 100000 --depths 1,3,6
 run python src/run_exp12.py --exp drift --family tfim --n 8 --budget 100000 --depths 1,3,6
 
-# 9. 20-qubit chain, with models transferred from n = 8 and 10 (about 3.3 h).
-run env "${CHAIN20[@]}" python src/run20.py --budget 100000 --depths 1,2,3
-run env "${CHAIN20[@]}" python src/run20.py --budget 10000 --depths 1,2,3
+# 9. 20-qubit chain, uniform and disordered TFIM, with models transferred from n = 8 and 10 (about 3.9 h; 1.6 h per
+#    budget for uniform TFIM).
+for fam in tfim dtfim; do
+  for B in 100000 10000; do
+    run env "${CHAIN20[@]}" python src/run20.py --family "$fam" --budget "$B" --depths 1,2,3
+  done
+done
 
 # 10. Quench of a fixed-angle TFIM circuit, n = 8, 1e4 shots, 30 shot draws (about 36 min).
 run python src/run_quench.py --n 8 --budget 10000 --depths 1,2,3,4,6,8 --draws 30
 
-# 11. Second device (FakeTorino), uniform TFIM (about 4.5 h).
+# 11. Second device (FakeTorino), uniform and disordered TFIM (about 6 h).
 for n in 6 8 10; do
   for B in 100000 10000 1000000; do
     run env "${TORINO[@]}" python src/run_v3.py --part base --family tfim --n "$n" --budget "$B" --depths 1,2,3,4,6,8
@@ -121,6 +125,13 @@ for B in 10000 1000000; do
 done
 run env "${TORINO[@]}" python src/run_v3.py --part ours --family tfim --n 8 --budget 100000 --depths 1,2,3,4,6,8 \
   --methods "BlockGeo-QEM,abl: HS state loss"
+for n in 6 8 10; do
+  for B in 100000 10000 1000000; do
+    run env "${TORINO[@]}" python src/run_v3.py --part base --family dtfim --n "$n" --budget "$B" --depths 1,2,3,4,6,8
+    run env "${TORINO[@]}" python src/run_v3.py --part ours --family dtfim --n "$n" --budget "$B" --depths 1,2,3,4,6,8 \
+      --methods BlockGeo-QEM
+  done
+done
 
 # 12. Three-qubit blocks, uniform and disordered TFIM, n = 8 (about 1.3 h). The ablations run at 1e5 shots. The
 #     graph network of --part base reads two-qubit blocks, so run_gnn_b3.py trains its three-qubit version.

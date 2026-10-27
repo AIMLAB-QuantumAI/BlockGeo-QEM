@@ -8,7 +8,7 @@ usage: paper_tables.py              tab_wtl.tex
 tab_wtl.tex  BlockGeo-QEM against the best baseline (analyze_v3.BASELINES): wins/ties/losses over the six depths
              (paired Wilcoxon, 5% level) and the geometric mean over depths of the error ratio, for the local
              Bures and trace distances at 1e4, 1e5 and 1e6 shots (run_v3 results, no CDR input); the last rows
-             are the second device (WORK/results_v3_torino).
+             are the second device (WORK/results_v3_torino), one block per circuit family.
 marginals    needs only the _test files of gen_v3.py in the feats directory, no results.
 """
 import os
@@ -59,26 +59,31 @@ def main():
             head = (f"\\multirow{{3}}{{*}}{{\\parbox{{2.3cm}}{{{label}}}}}" if k == 0 else "")
             rows.append(f"{head} & {n} & " + " & ".join(cells) + " \\\\")
         rows.append("\\hline" if fam != "random" else "")
-    # second device (WORK/results_v3_torino): uniform TFIM at 1e4, 1e5 and 1e6 shots, one row per available n
+    # second device (WORK/results_v3_torino): one block per circuit family at 1e4, 1e5 and 1e6 shots, one row per n
     tor_dir = paths.results_dir("_v3_torino") + os.sep
     tor = [tor_dir + f for f in sorted(os.listdir(tor_dir)) if f.endswith("_samples.csv")] if os.path.isdir(tor_dir) else []
     if tor:
         ct = A.compare(pd.concat([pd.read_csv(f) for f in tor], ignore_index=True), "BlockGeo-QEM")
         ct["budget"] = ct.budget.astype(int)
-        ns = sorted(ct.n.unique())
-        if rows and rows[-1] == "":
-            rows[-1] = "\\hline"
-        for k, n in enumerate(ns):
-            cells = []
-            for B in BUDGETS:
-                for met in METS:
-                    sub = ct[(ct.n == n) & (ct.budget == B) & (ct.metric == met)]
-                    cells.append(cell(sub if len(sub) == 6 else None))
-            label = ("\\multirow{%d}{*}{\\parbox{2.3cm}{Uniform TFIM, ibm\\_torino}}" % len(ns) if len(ns) > 1
-                     else "\\begin{tabular}[c]{@{}c@{}}Uniform TFIM,\\\\ ibm\\_torino\\end{tabular}")
-            rows.append((label if k == 0 else "") + f" & {n} & " + " & ".join(cells) + " \\\\")
+        for fam in [f for f in ("tfim", "dtfim", "random") if f in set(ct.family)]:
+            cf = ct[ct.family == fam]
+            ns = sorted(cf.n.unique())
+            if rows and rows[-1] == "":
+                rows[-1] = "\\hline"
+            for k, n in enumerate(ns):
+                cells = []
+                for B in BUDGETS:
+                    for met in METS:
+                        sub = cf[(cf.n == n) & (cf.budget == B) & (cf.metric == met)]
+                        cells.append(cell(sub if len(sub) == 6 else None))
+                two = "\\begin{tabular}[c]{@{}l@{}}%s,\\\\ ibm\\_torino\\end{tabular}" % FAM[fam]   # two lines
+                label = "\\multirow{%d}{*}{%s}" % (len(ns), two) if len(ns) > 1 else two
+                rows.append((label if k == 0 else "") + f" & {n} & " + " & ".join(cells) + " \\\\")
+            rows.append("")
     body = "\n".join(r for r in rows if r)
     body = body.rsplit("\\hline", 1)[0] if body.endswith("\\hline") else body
+    body = body.rstrip()
+    body = body[:-3] if body.endswith(" \\\\") else body          # no trailing \\: it would add an empty row
     os.makedirs(OUT, exist_ok=True)
     with open(OUT + "tab_wtl.tex", "w") as f:
         f.write(body + "\n")

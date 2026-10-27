@@ -89,7 +89,8 @@ def _proj(s):
 
 def holm():
     """Holm correction over every paired test of tables/tab_wtl.tex: the three circuit families on the first device
-    and, when its results exist, uniform TFIM on the second device (results dir with the tag _v3_torino)."""
+    and, when its results exist, uniform and disordered TFIM on the second device (results dir with the tag
+    _v3_torino)."""
     import glob
 
     import analyze_v3 as A
