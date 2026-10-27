@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Writes the win/tie/loss table, the figures and the printed statistics from the results of reproduce_benchmarks.sh.
+# Writes the tables, the figures and the printed statistics from the results of reproduce_benchmarks.sh.
 #
 # Takes about 10 to 15 minutes in total and writes
 #   $BLOCKGEO_WORKDIR/tables/tab_wtl.tex     win/tie/loss table
@@ -66,4 +66,4 @@ run python src/test_sample_blocks.py
 run python src/find_chain.py torino cz 10 0.05
 run python src/find_chain.py sherbrooke ecr 33,39,40,41,53,60,59,58,71,77,78,79,91,98,99,100,110,118,119,120
 
-printf '\n[%s] table in %s, figures in %s\n' "$(date '+%F %T')" "$WORK/tables" "$WORK/figures"
+printf '\n[%s] tables in %s, figures in %s\n' "$(date '+%F %T')" "$WORK/tables" "$WORK/figures"

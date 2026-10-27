@@ -32,7 +32,7 @@ BlockGeo-QEM/
 │   ├── mpdo.py, sample_blocks.py  20-qubit simulator (matrix-product density operator) and block sampler
 │   ├── gen_*.py, gen20.py         data generators
 │   ├── run_*.py, run20.py         runners of the studies
-│   ├── analyze_*.py, paper_*.py   analyses, the win/tie/loss table and the figures
+│   ├── analyze_*.py, paper_*.py   analyses, the tables and the figures
 │   ├── fig_metric_dome.py         figure of the Bures geometry of a qubit section (needs no data)
 │   ├── find_chain.py              lowest-error chain on the coupling graph of a fake backend
 │   ├── test_mpdo.py, test_sample_blocks.py   checks of the 20-qubit simulator and the block sampler
@@ -119,12 +119,12 @@ Three scripts run the full pipeline in order. They can be started from any direc
 ```bash
 scripts/reproduce_data.sh         # simulated circuit data, about 47 h and 12.0 GB
 scripts/reproduce_benchmarks.sh   # every method and study, about 49 h
-scripts/reproduce_figures.sh      # win/tie/loss table, figures and printed statistics, about 15 min
+scripts/reproduce_figures.sh      # tables, figures and printed statistics, about 15 min
 ```
 
 `reproduce_data.sh` runs `WORKERS` simulations in parallel (default 8), and its memory use grows with that number. The scripts log their output to `logs/` in `BLOCKGEO_WORKDIR`.
 
-The table and the figures are written by the analysis scripts in `src/`. Paths are relative to `BLOCKGEO_WORKDIR`.
+The tables and the figures are written by the analysis scripts in `src/`. Paths are relative to `BLOCKGEO_WORKDIR`.
 
 | Output | Content | Analysis | Runs it needs |
 |---|---|---|---|
