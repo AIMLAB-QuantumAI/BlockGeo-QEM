@@ -243,3 +243,13 @@ def test_marginal_statistics(work, run_python, monkeypatch):
     assert 0.25 <= t.purity[0] <= 1 and -1e-12 <= t.lambda_min[0] <= 0.25
     out = run_python("src/paper_tables.py", "marginals", workdir=work).stdout
     assert "Uniform TFIM" in out and f"{t.purity[0]:.4f}" in out
+
+
+def test_validation_rule_default(monkeypatch):
+    """The validation check selects epochs by the held-out loss alone unless a tolerance is given, by argument or
+    by BLOCKGEO_TOL."""
+    monkeypatch.delenv("BLOCKGEO_TOL", raising=False)
+    assert v3.BlockGeoQEM2().tol == float("inf")
+    assert v3.BlockGeoQEM2(tol=0.02).tol == 0.02
+    monkeypatch.setenv("BLOCKGEO_TOL", "0.02")
+    assert v3.BlockGeoQEM2().tol == 0.02

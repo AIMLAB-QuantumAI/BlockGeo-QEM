@@ -15,6 +15,7 @@ All notable changes to this project are listed here. Version numbers follow [sem
 - A CI job that checks the shell scripts with `bash -n` and ShellCheck.
 
 ### Changed
+- BlockGeo-QEM chooses the number of training epochs by the held-out loss alone, the rule of the final results. The earlier default, which also required the held-out coordinate error to stay within 2% of that of the projected linear estimate, is available with `BLOCKGEO_TOL=0.02` or `tol=0.02`, and `run_tol.py` runs it explicitly.
 - CI runs on pushes to `main`, on pull requests and on demand, and cancels runs that a newer push supersedes; pushes to other branches no longer start a separate run.
 - Importing `qemlib` keeps thread settings chosen by the user; 4 threads remain the default (#11).
 - The data generators use at most as many worker processes as there are CPUs by default (#12).

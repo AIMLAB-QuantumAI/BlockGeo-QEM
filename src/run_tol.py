@@ -1,6 +1,6 @@
-"""Tolerance of the validation check: BlockGeo-QEM with the default rule (held-out coordinate error at most 2% above
-the backbone's) and with the held-out loss alone ("no check"). Records the selected epochs of the three seeds
-(-1 = no epoch qualified, the projected backbone is returned).
+"""Tolerance of the validation check: BlockGeo-QEM with a stricter check that also requires the held-out coordinate
+error to stay within 2% of the backbone's ("tol 0.02") and with the default rule, the held-out loss alone ("no check").
+Records the selected epochs of the three seeds (-1 = no epoch qualified, the projected backbone is returned).
 Results: <results dir>/tol_{family}_n{n}_B{budget}_samples.csv (test draws identical to run_v3.py, so paired).
 """
 import argparse
@@ -14,7 +14,7 @@ from paths import RES_DIR
 from run_v3 import draws
 from v3 import BlockGeoQEM2
 
-VARIANTS = {"BlockGeo-QEM (tol 0.02)": {}, "BlockGeo-QEM (no check)": {"tol": 1e9}}
+VARIANTS = {"BlockGeo-QEM (tol 0.02)": {"tol": 0.02}, "BlockGeo-QEM (no check)": {"tol": float("inf")}}
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
