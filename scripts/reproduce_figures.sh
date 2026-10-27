@@ -4,8 +4,8 @@
 # Takes about 10 to 15 minutes in total and writes
 #   $BLOCKGEO_WORKDIR/tables/tab_wtl.tex     win/tie/loss table
 #   $BLOCKGEO_WORKDIR/tables/tab_b3*.tex     two- against three-qubit blocks
-#   $BLOCKGEO_WORKDIR/figures/*.pdf          main_tfim, geometry, spectral, robust, n20_B100000, hardware,
-#                                            unstructured_B100000
+#   $BLOCKGEO_WORKDIR/figures/*.pdf          metric_dome, main_tfim, budget, geometry, spectral, robust,
+#                                            n20_B100000, hardware, unstructured_B100000
 #   $BLOCKGEO_WORKDIR/logs/reproduce_figures.log   every printed statistic
 #
 # Environment
@@ -55,7 +55,8 @@ run python src/analyze_nl.py
 run python src/analyze_v3.py      # per-setting comparison with the best baseline, results_v3/compare_BlockGeo-QEM.csv
 
 # 4. Figures (about a minute).
-run python src/paper_figs.py main geometry spectral robust n20 hardware unstructured
+run python src/paper_figs.py main budget geometry spectral robust n20 hardware unstructured
+run python src/fig_metric_dome.py     # Bures geometry of a qubit section, needs no data
 
 # 5. Checks of the MPDO simulator and of the block sampler against the density-matrix data, the chain search on
 #    the FakeTorino coupling graph, and the two-qubit and readout errors of the FakeSherbrooke chain and its

@@ -33,6 +33,7 @@ BlockGeo-QEM/
 │   ├── gen_*.py, gen20.py         data generators
 │   ├── run_*.py, run20.py         runners of the studies
 │   ├── analyze_*.py, paper_*.py   analyses, the win/tie/loss table and the figures
+│   ├── fig_metric_dome.py         figure of the Bures geometry of a qubit section (needs no data)
 │   ├── find_chain.py              lowest-error chain on the coupling graph of a fake backend
 │   ├── test_mpdo.py, test_sample_blocks.py   checks of the 20-qubit simulator and the block sampler
 │   └── blockgeo_qem_fixed.py      vendored code of BlockGeo-v1 (the earlier workshop model) and simulation primitives
@@ -128,7 +129,9 @@ The table and the figures are written by the analysis scripts in `src/`. Paths a
 | Output | Content | Analysis | Runs it needs |
 |---|---|---|---|
 | `tables/tab_wtl.tex` | Win/tie/loss counts over the six depths and geometric-mean error ratio of BlockGeo-QEM against the best baseline, for the local Bures and trace distances at 10⁴, 10⁵ and 10⁶ shots, every circuit family and n = 6, 8, 10, and uniform and disordered TFIM on the second device | `paper_tables.py` | main grid, second device |
-| `figures/main_tfim.pdf` | Uniform TFIM, local Bures and trace distance against Trotter steps at 10⁵ shots and Bures distance at 10⁴ shots, n = 6, 8, 10 | `paper_figs.py main` | main grid |
+| `figures/metric_dome.pdf` | Bures and Euclidean neighbourhoods of qubit states in a section of the Bloch ball and on the hemisphere that the section becomes under the Bures metric | `fig_metric_dome.py` | none |
+| `figures/main_tfim.pdf` | Uniform TFIM, local Bures and trace distance against Trotter steps at 10⁵ and 10⁴ shots, n = 6, 8, 10 | `paper_figs.py main` | main grid |
+| `figures/budget.pdf` | Error ratio of BlockGeo-QEM to the best baseline against the shot budget, per circuit family | `paper_figs.py budget` | main grid |
 | `figures/unstructured_B100000.pdf` | Local Bures distance of disordered TFIM and random circuits at 10⁵ shots | `paper_figs.py unstructured` | main grid |
 | `figures/geometry.pdf` | Ablations of the state head and the GNN trunk, block Bures distance in bins of ideal block purity for the Hilbert-Schmidt-trained and the Bures-trained model, and the sweep of the weight β (TFIM n = 8, 10⁵ shots) | `paper_review_checks.py purity`, then `paper_figs.py geometry` | main grid, `--tag nl` runs, `run_beta.py`, `run_gnnb.py` |
 | `figures/spectral.pdf` | Errors of block purity, Rényi-2 entropy and concurrence against Trotter steps (TFIM n = 8, 10⁵ shots) | `paper_figs.py spectral` | `--tag nl` runs |

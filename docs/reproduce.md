@@ -355,7 +355,8 @@ python src/paper_extra.py torino n20 gnnb
 python src/paper_b3.py
 python src/analyze_nl.py
 python src/analyze_v3.py
-python src/paper_figs.py main geometry spectral robust n20 hardware unstructured
+python src/paper_figs.py main budget geometry spectral robust n20 hardware unstructured
+python src/fig_metric_dome.py
 python src/test_mpdo.py 8
 python src/test_sample_blocks.py
 python src/find_chain.py torino cz 10 0.05
@@ -375,7 +376,9 @@ python src/find_chain.py sherbrooke ecr 33,39,40,41,53,60,59,58,71,77,78,79,91,9
 | `results_v3b3/purity_resolved_b2_b3_{family}_n8_B100000.csv` | block Bures distance of BlockGeo-QEM and of the HS-trained model for every two- and three-qubit block, with its ideal purity and smallest eigenvalue | `paper_b3.py` | prediction files of 2.1, 2.2 and 2.12 at 10⁵ shots |
 | `tables/tab_b3.tex`, `tables/tab_b3_dtfim.tex` | LaTeX rows of the comparison of two- and three-qubit blocks for uniform and disordered TFIM, n = 8: win/tie/loss counts over the six depths, geometric-mean and per-depth error ratio of BlockGeo-QEM against the best baseline for the local Bures and trace distances at 10⁴ and 10⁵ shots | `paper_b3.py` | `compare_b2_b3_*.csv` |
 | `tables/tab_b3_gain_both.tex` | LaTeX rows of the number of blocks and the Bures-distance ratio of the HS-trained model to BlockGeo-QEM in bins of the ideal block purity and of the smallest eigenvalue, two- and three-qubit blocks, both TFIM families, 10⁵ shots (from `tab_b3_gain.tex` and `tab_b3_gain_dtfim.tex`) | `paper_b3.py` | `purity_resolved_b2_b3_*.csv` |
-| `figures/main_tfim.pdf` | uniform TFIM, local Bures and trace distance against Trotter steps at 10⁵ shots and Bures distance at 10⁴ shots, n = 6, 8, 10 | `paper_figs.py main` | 2.1 |
+| `figures/metric_dome.pdf` | sets of qubit states at Euclidean coordinate distance 0.1 and at Bures distance 0.05 from a grid of states in a section of the Bloch ball, drawn in the section and on the hemisphere that the section becomes under the Bures metric | `fig_metric_dome.py` | none |
+| `figures/main_tfim.pdf` | uniform TFIM, local Bures and trace distance against Trotter steps at 10⁵ and 10⁴ shots, n = 6, 8, 10 | `paper_figs.py main` | 2.1 |
+| `figures/budget.pdf` | geometric mean over depths of the error ratio of BlockGeo-QEM to the best baseline against the shot budget (10⁴, 10⁵, 10⁶ and exact), per family, for the local Bures and trace distances, with the geometric mean over n = 6, 8, 10 and the range over n | `paper_figs.py budget` | 2.1 |
 | `figures/geometry.pdf` | ablations of the state head and the GNN trunk (Bures and trace distance, n = 8, 10⁵ shots), block Bures distance in bins of ideal block purity for the HS-trained and the Bures-trained model, and the β sweep at 1, 3 and 6 steps | `paper_figs.py geometry` | 2.1, 2.13, `purity_resolved_B100000.csv`, 2.4 |
 | `figures/spectral.pdf` | errors of block purity, Rényi-2 entropy and concurrence against Trotter steps, TFIM n = 8, 10⁵ shots | `paper_figs.py spectral` | 2.2 |
 | `figures/robust.pdf` | size transfer to n = 10, training-set size and calibration drift at three Trotter steps, TFIM, 10⁵ shots | `paper_figs.py robust` | 2.1, 2.3, 2.8 |
