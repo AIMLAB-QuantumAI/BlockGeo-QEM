@@ -49,10 +49,11 @@ The times below come from the logs of the original runs on one workstation with 
 | `run_quench.py` | | about 36 min |
 | second-device runs | base 5–20 min, ours 12–19 min | about 4.5 h |
 | three-qubit-block runs | base and `run_gnn_b3.py` 1.5–3 min, ours 3–35 min | about 1.3 h |
+| `run_gnnb.py` | 3–16 min | about 40 min |
 | hardware analyses (`compare_hw.py`, `quench_hw.py`) | 3–4 min per call on four CPU cores | about 10 min |
 | analyses, table and figures | seconds to 2 min | about 15 min |
 
-In total this is about 88 hours of computing, about 42 h of data generation and about 46 h of runs and analyses. With two jobs in parallel it took 2 to 3 days.
+In total this is about 89 hours of computing, about 42 h of data generation and about 47 h of runs and analyses. With two jobs in parallel it took 2 to 3 days.
 
 | Directory | Content | Size |
 |---|---|---|
@@ -280,6 +281,18 @@ done
 
 Writes `results_v3b3/{base,ours,gnn}_{family}_n8_B{budget}_samples.csv` and the prediction files. The ablations run at 10⁵ shots only. The concurrence is defined for two qubits, so `err_concurrence` is empty for three-qubit blocks.
 
+### 2.13 GNN trunk
+
+```bash
+for fam in tfim dtfim; do
+  for B in 100000 10000; do
+    python src/run_gnnb.py --family $fam --n 8 --budget $B --depths 1,2,3,4,6,8
+  done
+done
+```
+
+Writes `results_v3/gnnb_{family}_n8_B{budget}_samples.csv` (method `GNN-QEM (Bures)`, the selected epochs of the three seeds in column `epochs`) and the prediction files. The model (`gnn_bures.py`) replaces the trunk of BlockGeo-QEM by the message-passing network of GNN-QEM with its node and edge features, and keeps the backbone, the heads, the loss and the training of BlockGeo-QEM.
+
 ## 3. Hardware experiment
 
 The measurements are shipped in `data/hardware` together with the ideal labels (`labels.npz`), so the QPU steps are optional. The offline analyses at the end of `scripts/reproduce_benchmarks.sh` work on a copy in `$BLOCKGEO_WORKDIR/hardware` (default `work/hardware`).
@@ -328,7 +341,7 @@ python src/paper_tables.py
 python src/paper_tables.py numbers
 python src/paper_tables.py cdr
 python src/paper_tables.py marginals
-python src/paper_extra.py torino n20
+python src/paper_extra.py torino n20 gnnb
 python src/paper_b3.py
 python src/analyze_nl.py
 python src/analyze_v3.py
@@ -353,7 +366,7 @@ python src/find_chain.py sherbrooke ecr 33,39,40,41,53,60,59,58,71,77,78,79,91,9
 | `tables/tab_b3.tex`, `tables/tab_b3_dtfim.tex` | LaTeX rows of the comparison of two- and three-qubit blocks for uniform and disordered TFIM, n = 8: win/tie/loss counts over the six depths, geometric-mean and per-depth error ratio of BlockGeo-QEM against the best baseline for the local Bures and trace distances at 10⁴ and 10⁵ shots | `paper_b3.py` | `compare_b2_b3_*.csv` |
 | `tables/tab_b3_gain_both.tex` | LaTeX rows of the number of blocks and the Bures-distance ratio of the HS-trained model to BlockGeo-QEM in bins of the ideal block purity and of the smallest eigenvalue, two- and three-qubit blocks, both TFIM families, 10⁵ shots (from `tab_b3_gain.tex` and `tab_b3_gain_dtfim.tex`) | `paper_b3.py` | `purity_resolved_b2_b3_*.csv` |
 | `figures/main_tfim.pdf` | uniform TFIM, local Bures and trace distance against Trotter steps at 10⁵ shots and Bures distance at 10⁴ shots, n = 6, 8, 10 | `paper_figs.py main` | 2.1 |
-| `figures/geometry.pdf` | ablations of the state head (Bures and trace distance, n = 8, 10⁵ shots), block Bures distance in bins of ideal block purity for the HS-trained and the Bures-trained model, and the β sweep at 1, 3 and 6 steps | `paper_figs.py geometry` | 2.1, `purity_resolved_B100000.csv`, 2.4 |
+| `figures/geometry.pdf` | ablations of the state head and the GNN trunk (Bures and trace distance, n = 8, 10⁵ shots), block Bures distance in bins of ideal block purity for the HS-trained and the Bures-trained model, and the β sweep at 1, 3 and 6 steps | `paper_figs.py geometry` | 2.1, 2.13, `purity_resolved_B100000.csv`, 2.4 |
 | `figures/spectral.pdf` | errors of block purity, Rényi-2 entropy and concurrence against Trotter steps, TFIM n = 8, 10⁵ shots | `paper_figs.py spectral` | 2.2 |
 | `figures/robust.pdf` | size transfer to n = 10, training-set size and calibration drift at three Trotter steps, TFIM, 10⁵ shots | `paper_figs.py robust` | 2.1, 2.3, 2.8 |
 | `figures/n20_B100000.pdf` | 20-qubit chain, local Bures and trace distance at Trotter steps 1 to 3, including the transfer from n = 10 | `paper_figs.py n20` | 2.9 |
@@ -374,6 +387,7 @@ python src/find_chain.py sherbrooke ecr 33,39,40,41,53,60,59,58,71,77,78,79,91,9
 | `paper_tables.py marginals` | median over test circuits and blocks of the purity and of the smallest eigenvalue of the ideal block marginals, per family, n and depth, and the range of the median purity per family; reads only the `_test` files of 1.1 |
 | `paper_extra.py torino` | second device, win/tie/loss counts and ratios for six metrics pooled over n and per n, per-depth ratios and best baselines, and the HS control |
 | `paper_extra.py n20` | 20-qubit chain, win/tie/loss counts and ratios of every BlockGeo-QEM variant, and the mean Bures distance per method and depth |
+| `paper_extra.py gnnb` | GNN trunk (n = 8), ratio of its mean local Bures and trace distances to those of BlockGeo-QEM and ratio of those of GNN-QEM to it, per family, budget and depth, with their ranges |
 | `paper_b3.py` | per family, the error ratios and best baselines per block size, budget and depth, the HS control per depth, the median smallest eigenvalue and the mean Bures distance of BlockGeo-QEM per purity bin, and the Bures distances of the unmitigated estimate, GNN-QEM and BlockGeo-QEM, followed by the written table rows |
 | `analyze_nl.py` | spectral quantities per setting against the best baseline and the two Euclidean ablations |
 | `analyze_v3.py` | win/tie/loss counts per n and budget for uniform TFIM and random circuits |

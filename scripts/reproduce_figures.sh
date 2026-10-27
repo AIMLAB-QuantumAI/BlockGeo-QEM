@@ -49,7 +49,7 @@ run python src/paper_tables.py
 run python src/paper_tables.py numbers
 run python src/paper_tables.py cdr
 run python src/paper_tables.py marginals
-run python src/paper_extra.py torino n20
+run python src/paper_extra.py torino n20 gnnb
 run python src/paper_b3.py       # two- against three-qubit blocks, tables/tab_b3*.tex
 run python src/analyze_nl.py
 run python src/analyze_v3.py      # per-setting comparison with the best baseline, results_v3/compare_BlockGeo-QEM.csv

@@ -24,6 +24,7 @@ BlockGeo-QEM/
 │   ├── baselines.py               ZNE, per-coordinate linear regression, random forest, MLP-QEM
 │   ├── baselines_v3.py            CDR, vnCDR, idealised PEC, GNN-QEM
 │   ├── gnn_b3.py                  GNN-QEM for blocks of three qubits
+│   ├── gnn_bures.py               network of GNN-QEM as the trunk of BlockGeo-QEM (ablation)
 │   ├── measure_v3.py              finite-shot measurement with readout errors and readout-error mitigation
 │   ├── shots.py, readout.py       block Pauli estimates from the covering settings, tensored readout errors and REM
 │   ├── geometry.py                Bures metric in Pauli coordinates
@@ -116,7 +117,7 @@ Three scripts run the full pipeline in order. They can be started from any direc
 
 ```bash
 scripts/reproduce_data.sh         # simulated circuit data, about 40 h and 10.5 GB
-scripts/reproduce_benchmarks.sh   # every method and study, about 46 h
+scripts/reproduce_benchmarks.sh   # every method and study, about 47 h
 scripts/reproduce_figures.sh      # win/tie/loss table, figures and printed statistics, about 15 min
 ```
 
@@ -129,7 +130,7 @@ The table and the figures are written by the analysis scripts in `src/`. Paths a
 | `tables/tab_wtl.tex` | Win/tie/loss counts over the six depths and geometric-mean error ratio of BlockGeo-QEM against the best baseline, for the local Bures and trace distances at 10⁴, 10⁵ and 10⁶ shots, every circuit family and n = 6, 8, 10, and uniform TFIM on the second device | `paper_tables.py` | main grid, second device |
 | `figures/main_tfim.pdf` | Uniform TFIM, local Bures and trace distance against Trotter steps at 10⁵ shots and Bures distance at 10⁴ shots, n = 6, 8, 10 | `paper_figs.py main` | main grid |
 | `figures/unstructured_B100000.pdf` | Local Bures distance of disordered TFIM and random circuits at 10⁵ shots | `paper_figs.py unstructured` | main grid |
-| `figures/geometry.pdf` | Ablations of the state head, block Bures distance in bins of ideal block purity for the Hilbert-Schmidt-trained and the Bures-trained model, and the sweep of the weight β (TFIM n = 8, 10⁵ shots) | `paper_review_checks.py purity`, then `paper_figs.py geometry` | main grid, `--tag nl` runs, `run_beta.py` |
+| `figures/geometry.pdf` | Ablations of the state head and the GNN trunk, block Bures distance in bins of ideal block purity for the Hilbert-Schmidt-trained and the Bures-trained model, and the sweep of the weight β (TFIM n = 8, 10⁵ shots) | `paper_review_checks.py purity`, then `paper_figs.py geometry` | main grid, `--tag nl` runs, `run_beta.py`, `run_gnnb.py` |
 | `figures/spectral.pdf` | Errors of block purity, Rényi-2 entropy and concurrence against Trotter steps (TFIM n = 8, 10⁵ shots) | `paper_figs.py spectral` | `--tag nl` runs |
 | `figures/robust.pdf` | Size transfer to n = 10, training-set size and calibration drift (TFIM, 10⁵ shots, the last two at three Trotter steps) | `paper_figs.py robust` | `run_transfer.py`, `run_exp12.py`, main grid |
 | `figures/n20_B100000.pdf` | 20-qubit chain, local Bures and trace distance for Trotter steps 1 to 3, including models transferred from n = 10 | `paper_figs.py n20` | `gen20.py`, `run20.py` |
@@ -144,6 +145,7 @@ The other studies are reported as printed statistics or as CSV files of the runn
 | Main benchmark (uniform TFIM, disordered TFIM, random circuits; n = 6, 8, 10; 10⁴, 10⁵, 10⁶ shots and exact) | `gen_v3.py`, `run_v3.py --part base` and `--part ours` | `paper_tables.py` and `paper_tables.py numbers`, per-setting comparisons in `results_v3/compare_BlockGeo-QEM.csv` from `analyze_v3.py` |
 | Holm correction of the win/tie/loss tests | main grid | `paper_review_checks.py holm` |
 | Ablations, exact limit, PEC sampling overhead, size transfer, network size | `run_v3.py --part ours`, `run_transfer.py` | `paper_tables.py numbers` |
+| GNN trunk with the backbone, heads, loss and training of BlockGeo-QEM (uniform and disordered TFIM, n = 8) | `run_gnnb.py` | `paper_extra.py gnnb` |
 | Second-order expansion of the Bures distance (metric G in Pauli coordinates against the exact distance) | none | `tests/test_geometry.py` |
 | Spectral quantities | `run_v3.py --tag nl` | `analyze_nl.py`, `paper_tables.py numbers` |
 | Block Bures distance by ideal block purity | `run_v3.py` (prediction files) | `paper_review_checks.py purity` |

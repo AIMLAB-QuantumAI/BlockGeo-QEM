@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs every mitigation method on the data of reproduce_data.sh and re-analyses the shipped hardware measurements.
 #
-# It takes about 40 hours of computing. The times below were measured with one GPU for training. Training on a
+# It takes about 47 hours of computing. The times below were measured with one GPU for training. Training on a
 # CPU takes longer. Every runner except run_quench.py appends to its CSV file after each depth and skips depths
 # that are already there, so the script can be restarted after an interruption.
 #
@@ -133,7 +133,15 @@ for fam in tfim dtfim; do
   done
 done
 
-# 13. Hardware data of ibm_fez (no IBM account needed). Readout errors and unmitigated errors, the learned methods
+# 13. GNN trunk with the backbone, heads, loss and training of BlockGeo-QEM, uniform and disordered TFIM, n = 8
+#     (about 40 min).
+for fam in tfim dtfim; do
+  for B in 100000 10000; do
+    run python src/run_gnnb.py --family "$fam" --n 8 --budget "$B" --depths 1,2,3,4,6,8
+  done
+done
+
+# 14. Hardware data of ibm_fez (no IBM account needed). Readout errors and unmitigated errors, the learned methods
 #     trained on the measured training circuits, and the hardware quench (minutes).
 run python hardware/analyze_hw.py ibm_fez_d1_tr100_te30_s1000
 run python hardware/analyze_hw.py ibm_fez_d2_tr100_te30_s500

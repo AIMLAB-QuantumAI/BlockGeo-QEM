@@ -14,6 +14,7 @@ All notable changes to this project are listed here. Version numbers follow [sem
 - A `Makefile` with targets for the tests, the quick start, the example and the reproduction scripts.
 - A CI job that checks the shell scripts with `bash -n` and ShellCheck.
 - Blocks of three neighbouring qubits (`BLOCKGEO_B=3`, 27 covering settings) in the data generator, the measurement, the baselines and BlockGeo-QEM, with GNN-QEM for three-qubit blocks (`run_gnn_b3.py`) and the comparison of two- and three-qubit blocks (`paper_b3.py`).
+- The GNN-trunk ablation: `gnn_bures.py` uses the message-passing network of GNN-QEM as the trunk of BlockGeo-QEM with its backbone, heads, loss and training. `run_gnnb.py` runs it, `paper_extra.py gnnb` compares it with BlockGeo-QEM and GNN-QEM, and the geometry figure shows it.
 
 ### Changed
 - BlockGeo-QEM chooses the number of training epochs by the held-out loss alone, the rule of the final results. The earlier default, which also required the held-out coordinate error to stay within 2% of that of the projected linear estimate, is available with `BLOCKGEO_TOL=0.02` or `tol=0.02`, and `run_tol.py` runs it explicitly.

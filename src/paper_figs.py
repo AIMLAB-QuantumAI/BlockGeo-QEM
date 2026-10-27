@@ -4,8 +4,9 @@ usage: paper_figs.py [target ...]          (default: every target)
 
 main          main_tfim.pdf: local Bures and trace distance vs Trotter steps, one column per n (uniform TFIM,
               1e5 and 1e4 shots)
-geometry      geometry.pdf: state-head ablations vs Trotter steps, block Bures distance in bins of ideal block purity
-              (purity_resolved_B100000.csv of paper_review_checks.py purity) and the beta sweep (TFIM n=8, 1e5 shots)
+geometry      geometry.pdf: state-head ablations and the GNN trunk (gnnb_*.csv of run_gnnb.py, if run) vs Trotter
+              steps, block Bures distance in bins of ideal block purity (purity_resolved_B100000.csv of
+              paper_review_checks.py purity) and the beta sweep (TFIM n=8, 1e5 shots)
 spectral      spectral.pdf: purity, Renyi-2 and concurrence errors vs Trotter steps (TFIM n=8, 1e5 shots)
 robust        robust.pdf: size transfer to n=10, training-set size, calibration drift (TFIM, 1e5 shots)
 n20           n20_B100000.pdf: 20-qubit chain (tensor-network data), Trotter steps 1-3
@@ -45,6 +46,7 @@ STYLE = {  # key: (label, color, marker, linestyle); baselines cool or grey, our
     "RF": ("RF", (0.80, 0.47, 0.65), "<", ":"),
     "MLP-QEM": ("MLP", (0.55, 0.35, 0.70), ">", ":"),
     "GNN-QEM": ("GNN", (0.15, 0.20, 0.55), "h", "-."),
+    "GNN-QEM (Bures)": ("GNN trunk, Bures loss", (0.15, 0.20, 0.55), "h", ":"),
     "BlockGeo-QEM": ("BlockGeo-QEM", ORANGE, "o", "-"),
     "abl: HS state loss": ("HS state loss", (0.95, 0.62, 0.40), "s", "--"),
     "abl: coordinate head only": ("Coordinate head only", (0.55, 0.22, 0.05), "D", ":"),
@@ -221,11 +223,12 @@ def fig_hardware():
 
 
 def fig_geometry(n=8, B=100000):
-    """(a, b) state-head ablations vs steps (Bures, trace) for n=8; (c) block Bures distance of the HS-trained and
+    """(a, b) state-head ablations and the GNN trunk vs steps (Bures, trace) for n=8; (c) block Bures distance of the HS-trained and
     Bures-trained models in bins of ideal block purity (uniform TFIM n=6, 8, 10, all depths; paper_review_checks.py);
     (d) beta sweep (Bures) at steps 1, 3, 6."""
     ours, base = read(f"ours_tfim_n{n}_B{B}_samples.csv"), read(f"base_tfim_n{n}_B{B}_samples.csv")
-    df = pd.concat([ours, base])
+    gnnb = read(f"gnnb_tfim_n{n}_B{B}_samples.csv")                 # GNN trunk with the Bures heads, if run
+    df = pd.concat([ours, base] + ([gnnb] if gnnb is not None else []))
     beta = read(f"beta_tfim_n{n}_B{B}_samples.csv")
     b1 = ours[ours.method == "BlockGeo-QEM"].assign(method="beta=1")
     beta = pd.concat([beta, b1])
@@ -233,6 +236,8 @@ def fig_geometry(n=8, B=100000):
     fig = plt.figure(figsize=(3.4, 3.9))
     gs = fig.add_gridspec(2, 2, hspace=0.75, wspace=0.55, top=0.84, bottom=0.1, left=0.165, right=0.98)
     abl = ["GNN-QEM", "abl: HS state loss", "abl: coordinate head only", "abl: no circuit context", "BlockGeo-QEM"]
+    if gnnb is not None:
+        abl.insert(1, "GNN-QEM (Bures)")
     short = {"local_bures": "Bures distance", "local_trace": "Trace distance"}
     axs = [fig.add_subplot(gs[r, c]) for r in range(2) for c in range(2)]
     for ax, met, tag in zip(axs[:2], ("local_bures", "local_trace"), ("(a)", "(b)")):
