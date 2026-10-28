@@ -100,7 +100,11 @@ def simulate(device_qc, n, dev, chi_max=2048, cutoff=1e-13):
         th = np.einsum("lam,mbr->labr", A[s], A[s + 1])
         cl, cr = th.shape[0], th.shape[3]
         th = np.einsum("xy,lyr->lxr", R, th.reshape(cl, 16, cr)).reshape(cl * 4, 4 * cr)
-        U, S, Vt = np.linalg.svd(th, full_matrices=False)
+        try:
+            U, S, Vt = np.linalg.svd(th, full_matrices=False)
+        except np.linalg.LinAlgError:                      # gesdd can fail to converge on rare matrices; gesvd is slower but robust
+            from scipy.linalg import svd as _svd
+            U, S, Vt = _svd(th, full_matrices=False, lapack_driver="gesvd")
         keep = max(1, min(chi_max, int(np.sum(S > cutoff * S[0]))))
         discarded = max(discarded, float(np.sum(S[keep:] ** 2) / np.sum(S ** 2)))
         A[s] = U[:, :keep].reshape(cl, 4, keep)

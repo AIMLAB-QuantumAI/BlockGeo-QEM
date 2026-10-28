@@ -1,4 +1,5 @@
-"""Uniform TFIM on a 20-qubit chain (Trotter steps 1-3), from the tensor-network data of gen20.py.
+"""Uniform or disordered TFIM (--family) on a 20-qubit chain (Trotter steps 1-3), from the tensor-network data of
+gen20.py.
 
 In-size learned methods are trained on 200 twenty-qubit training circuits whose ideal marginals come from the
 tensor-network simulation; BlockGeo-QEM (boundary positions), the graph network and the pooled OLS map are also
@@ -7,7 +8,7 @@ idealized PEC and CDR. ZNE and the multi-noise-level methods are left out becaus
 be simulated exactly. All measurements, including those of the n = 8 and n = 10 training circuits, are drawn with
 sample_blocks.measure_blocks.
 Requires BLOCKGEO_CHAIN with the 20-qubit chain (first 10 qubits = default chain).
-Results: <results dir>/n20_tfim_B{budget}_samples.csv (+ predictions in <results dir>/pred).
+Results: <results dir>/n20_{family}_B{budget}_samples.csv (+ predictions in <results dir>/pred).
 """
 import argparse
 import os
@@ -26,13 +27,15 @@ from paths import FEAT_DIR, RES_DIR, TAG, feats_dir, load_generated
 from v3 import Backbone, BlockGeoQEM2
 
 F20 = feats_dir(TAG + "_n20")                       # data of gen20.py (WORK/feats_v3_n20 by default)
+FAM = "tfim"                                        # circuit family, set from --family
 
 
 def draws20(d, budget, n=20, seed=0):
     rng = lambda k: np.random.default_rng([seed, n, d, budget, k])
     shots = None if budget == 0 else budget
-    cmd = f"BLOCKGEO_CHAIN=<20-qubit chain of docs/reproduce.md> python src/gen20.py --n {n} --depths {d}"
-    get = lambda part: load_generated(os.path.join(F20, f"tfim_n{n}_d{d}_{part}.npz"), cmd)
+    cmd = (f"BLOCKGEO_CHAIN=<20-qubit chain of docs/reproduce.md> python src/gen20.py --family {FAM} --n {n} "
+           f"--depths {d}")
+    get = lambda part: load_generated(os.path.join(F20, f"{FAM}_n{n}_d{d}_{part}.npz"), cmd)
     tr, te, cdr = get("train"), get("test"), get("cdr")
     return dict(tr=tr, te=te, cdr=cdr,
                 tr1=SB.measure_blocks(tr["S_s1"], n, shots, rng(0)),
@@ -43,8 +46,8 @@ def draws20(d, budget, n=20, seed=0):
 
 def source(n_src, d, budget, seed=0):
     """Training circuits of the n_src-qubit chain (gen_v3.py data), measured with the same block sampler."""
-    tr = load_generated(os.path.join(FEAT_DIR, f"tfim_n{n_src}_d{d}_train.npz"),
-                        f"python src/gen_v3.py --family tfim --n {n_src} --depths {d}")
+    tr = load_generated(os.path.join(FEAT_DIR, f"{FAM}_n{n_src}_d{d}_train.npz"),
+                        f"python src/gen_v3.py --family {FAM} --n {n_src} --depths {d}")
     shots = None if budget == 0 else budget
     X = SB.measure_blocks(tr["S_s1"], n_src, shots, np.random.default_rng([seed, n_src, d, budget, 0]))
     return X, tr["S_ideal"]
@@ -77,12 +80,14 @@ def methods(D, d, budget, n=20):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
+    ap.add_argument("--family", default="tfim", choices=["tfim", "dtfim"])
     ap.add_argument("--budget", type=int, required=True)
     ap.add_argument("--depths", default="1,2,3")
     args = ap.parse_args()
+    FAM = args.family
     assert len(NL.CHAIN) >= 20, "set BLOCKGEO_CHAIN to the 20-qubit chain"
     os.makedirs(os.path.join(RES_DIR, "pred"), exist_ok=True)
-    stem = f"n20_tfim_B{args.budget}"
+    stem = f"n20_{FAM}_B{args.budget}"
     out = os.path.join(RES_DIR, f"{stem}_samples.csv")
     done = pd.read_csv(out) if os.path.exists(out) else None
     dfs = [done] if done is not None else []
@@ -101,7 +106,7 @@ if __name__ == "__main__":
             df["fit_time_s"] = time.time() - t1
             rows.append(df)
         df = pd.concat(rows, ignore_index=True)
-        df["family"], df["n"], df["depth"], df["budget"] = "tfim", 20, d, args.budget
+        df["family"], df["n"], df["depth"], df["budget"] = FAM, 20, d, args.budget
         np.savez_compressed(os.path.join(RES_DIR, "pred", f"{stem}_d{d}.npz"),
                             **{k.replace(" ", "_").replace(">", ""): v for k, v in preds.items()})
         dfs.append(df)

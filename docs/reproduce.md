@@ -8,7 +8,7 @@ This guide lists, in order, every command that regenerates the simulated data, r
 
 **Data version.** Leave `BLOCKGEO_TAG` unset. The default `_v3` selects `feats_v3/` and `results_v3/`. Only the second-device commands set `BLOCKGEO_TAG=_v3_torino`, which selects `feats_v3_torino/` and `results_v3_torino/`, and the three-qubit-block commands set `BLOCKGEO_TAG=_v3b3 BLOCKGEO_B=3`, which selects `feats_v3b3/`, `results_v3b3/` and blocks of three neighbouring qubits. The analysis scripts read `results_v3/`, `results_v3_torino/` and `results_v3b3/` and must run without `BLOCKGEO_TAG`.
 
-**Resources.** The generated data take about 10.5 GB of disk space and the results about 0.2 GB. A data generator needs 3 to 7.5 GB of RAM depending on n and on the number of worker processes, and a training job about 2.5 to 3 GB. A GPU is optional and only speeds up training.
+**Resources.** The generated data take about 12.0 GB of disk space and the results about 0.2 GB. A data generator needs 3 to 7.5 GB of RAM depending on n and on the number of worker processes, and a training job about 2.5 to 3 GB. A GPU is optional and only speeds up training.
 
 **Resuming.** The generators skip files that already exist. The runners append to their CSV file after every depth and skip depths that are already in it, except `run_quench.py`, which recomputes all depths. To recompute a setting, delete its files first.
 
@@ -31,8 +31,8 @@ The times below come from the logs of the original runs on one workstation with 
 | `gen_v3.py`, three families (10 to 12 workers) | 4–8 min (n = 6), 10–16 min (n = 8), about 5 h (n = 10) | about 16 h |
 | `gen_v3_trcdr.py` (6 to 10 workers) | 4–7 min (n = 6), 10–16 min (n = 8), about 8.5 h (n = 10) | about 18 h |
 | `gen_exp12.py` | | about 6 min |
-| `gen20.py`, Trotter steps 1 to 3 (8 workers) | | about 4 min |
-| `gen_v3.py`, second device (6 workers) | 6 min (n = 6), 35 min (n = 8), 5.6 h (n = 10) | about 6.5 h |
+| `gen20.py`, Trotter steps 1 to 3 (8 workers) | 1.5–4 min per family | about 6 min |
+| `gen_v3.py`, second device (6 workers) | uniform TFIM 6 min (n = 6), 35 min (n = 8), 5.6 h (n = 10); disordered TFIM 6 min, 15 min, 5.5 h | about 12.5 h |
 | `gen_v3.py`, three-qubit blocks (6 workers) | 13–17 min per family | about 30 min |
 | `run_v3.py --part base` | 6–28 min per (family, n, budget) | |
 | `run_v3.py --part ours` at 10⁵ shots | uniform TFIM 1–2 h, disordered TFIM 12–36 min, random 7–15 min | |
@@ -45,24 +45,24 @@ The times below come from the logs of the original runs on one workstation with 
 | `run_tol.py` | 7–69 min | about 2.5 h |
 | `run_seeds.py` | | about 1.3 h |
 | `run_exp12.py` | data size about 70 min, drift about 25 min | about 1.5 h |
-| `run20.py` | about 1.6 h per budget | about 3.3 h |
+| `run20.py` | per budget about 1.6 h (uniform TFIM) and 14–20 min (disordered TFIM) | about 3.9 h |
 | `run_quench.py` | | about 36 min |
-| second-device runs | base 5–20 min, ours 12–19 min | about 4.5 h |
+| second-device runs | base 3–20 min, ours 2–19 min | about 6 h |
 | three-qubit-block runs | base and `run_gnn_b3.py` 1.5–3 min, ours 3–35 min | about 1.3 h |
 | `run_gnnb.py` | 3–16 min | about 40 min |
 | hardware analyses (`compare_hw.py`, `quench_hw.py`) | 3–4 min per call on four CPU cores | about 10 min |
 | analyses, table and figures | seconds to 2 min | about 15 min |
 
-In total this is about 89 hours of computing, about 42 h of data generation and about 47 h of runs and analyses. With two jobs in parallel it took 2 to 3 days.
+In total this is about 96 hours of computing, about 47 h of data generation and about 49 h of runs and analyses. With two jobs in parallel it took 2 to 3 days.
 
 | Directory | Content | Size |
 |---|---|---|
 | `feats_v3/` | main data (`_train`, `_test`, `_cdr`, `_cliff`) | 4.1 GB |
 | `feats_v3/` | near-Clifford training sets (`_trcdr`) | 3.3 GB |
 | `feats_v3/` | extra training circuits (`_trainx`) and `drift/` | 0.16 GB |
-| `feats_v3_torino/` | second device | 1.4 GB |
-| `feats_v3_n20/` | 20-qubit chain | 0.02 GB |
-| `feats_v3b3/` | three-qubit blocks | 1.5 GB |
+| `feats_v3_torino/` | second device, both TFIM families | 2.7 GB |
+| `feats_v3_n20/` | 20-qubit chain, both TFIM families | 0.04 GB |
+| `feats_v3b3/` | three-qubit blocks | 1.6 GB |
 | `results_v3/`, `results_v3_torino/`, `results_v3b3/` | per-sample CSV files and predictions | 0.2 GB |
 
 ## Conventions
@@ -112,18 +112,19 @@ Writes `feats_v3/tfim_n8_d{1,3,6}_trainx.npz` (training circuits 200 to 399 of t
 ### 1.4 20-qubit chain
 
 ```bash
-env "${CHAIN20[@]}" python src/gen20.py --n 20 --depths 1,2,3 --workers 8
+for fam in tfim dtfim; do env "${CHAIN20[@]}" python src/gen20.py --family $fam --n 20 --depths 1,2,3 --workers 8; done
 ```
 
-Writes `feats_v3_n20/tfim_n20_d{1,2,3}_{test,train,cdr}.npz` and prints the largest bond dimension of every depth. The data come from the MPDO simulator (`mpdo.py`), and `gen20.py` stops if the simulation of a noisy circuit discards more than 10⁻¹⁰ of the weight. Only fold scale 1 is simulated. More Trotter steps can be requested with `--depths`, but the bond dimension grows quickly and a fourth step takes hours.
+Writes `feats_v3_n20/{tfim,dtfim}_n20_d{1,2,3}_{test,train,cdr}.npz` and prints the largest bond dimension of every depth. The data come from the MPDO simulator (`mpdo.py`), and `gen20.py` stops if the simulation of a noisy circuit discards more than 10⁻¹⁰ of the weight. Only fold scale 1 is simulated. More Trotter steps can be requested with `--depths`, but the bond dimension grows quickly and a fourth step takes hours.
 
 ### 1.5 Second device
 
 ```bash
 for n in 6 8 10; do env "${TORINO[@]}" python src/gen_v3.py --family tfim --n $n --depths 1,2,3,4,6,8 --workers 6; done
+for n in 6 8 10; do env "${TORINO[@]}" python src/gen_v3.py --family dtfim --n $n --depths 1,2,3,4,6,8 --workers 6; done
 ```
 
-Writes `feats_v3_torino/tfim_n{n}_d{depth}_*.npz`.
+Writes `feats_v3_torino/{tfim,dtfim}_n{n}_d{depth}_*.npz`.
 
 ### 1.6 Three-qubit blocks
 
@@ -230,11 +231,14 @@ Writes `results_v3/datasize_tfim_n8_B100000_samples.csv` (learned methods traine
 ### 2.9 20-qubit chain
 
 ```bash
-env "${CHAIN20[@]}" python src/run20.py --budget 100000 --depths 1,2,3
-env "${CHAIN20[@]}" python src/run20.py --budget 10000 --depths 1,2,3
+for fam in tfim dtfim; do
+  for B in 100000 10000; do
+    env "${CHAIN20[@]}" python src/run20.py --family $fam --budget $B --depths 1,2,3
+  done
+done
 ```
 
-Writes `results_v3/n20_tfim_B{budget}_samples.csv`. The in-size learned methods are trained on 200 twenty-qubit circuits, and BlockGeo-QEM, GNN-QEM and pooled OLS are also transferred from n = 8 and n = 10, which needs `feats_v3/tfim_n{8,10}_d{1,2,3}_train.npz` from 1.1. Finite-shot measurements are drawn with the block sampler (`sample_blocks.py`). ZNE and the other multi-noise-level methods are left out, because the folded 20-qubit circuits are not simulated.
+Writes `results_v3/n20_{family}_B{budget}_samples.csv`. The in-size learned methods are trained on 200 twenty-qubit circuits, and BlockGeo-QEM, GNN-QEM and pooled OLS are also transferred from n = 8 and n = 10, which needs `feats_v3/{family}_n{8,10}_d{1,2,3}_train.npz` from 1.1. Finite-shot measurements are drawn with the block sampler (`sample_blocks.py`). ZNE and the other multi-noise-level methods are left out, because the folded 20-qubit circuits are not simulated.
 
 ### 2.10 Quench of a fixed-angle circuit
 
@@ -262,9 +266,15 @@ for B in 10000 1000000; do
 done
 env "${TORINO[@]}" python src/run_v3.py --part ours --family tfim --n 8 --budget 100000 --depths 1,2,3,4,6,8 \
   --methods "BlockGeo-QEM,abl: HS state loss"
+for n in 6 8 10; do
+  for B in 100000 10000 1000000; do
+    env "${TORINO[@]}" python src/run_v3.py --part base --family dtfim --n $n --budget $B --depths 1,2,3,4,6,8
+    env "${TORINO[@]}" python src/run_v3.py --part ours --family dtfim --n $n --budget $B --depths 1,2,3,4,6,8 --methods BlockGeo-QEM
+  done
+done
 ```
 
-Writes `results_v3_torino/{base,ours}_tfim_n{n}_B{budget}_samples.csv`. For n = 8 at 10⁵ shots, run the last command with both methods from the start, because the resume logic skips depths that are already in the CSV file.
+Writes `results_v3_torino/{base,ours}_{family}_n{n}_B{budget}_samples.csv`. For uniform TFIM with n = 8 at 10⁵ shots, run the command with both methods (`BlockGeo-QEM,abl: HS state loss`) from the start, because the resume logic skips depths that are already in the CSV file.
 
 ### 2.12 Three-qubit blocks
 
@@ -359,7 +369,7 @@ python src/find_chain.py sherbrooke ecr 33,39,40,41,53,60,59,58,71,77,78,79,91,9
 | `results_v3/quench_blocks_tfim_n8_B10000.csv` | RMS and maximum error over blocks of block purity, concurrence and ⟨X_i⟩, simulated quench | `analyze_quench_blocks.py sim` | `quench_pred_tfim_n8_B10000_d*.npz` (2.10) |
 | `<hardware dir>/quench_ibm_fez/blocks.csv` | the same for the hardware quench | `analyze_quench_blocks.py hw ibm_fez` | `quench_ibm_fez/pred_d*.npz` (3.2) |
 | `results_v3/purity_resolved_B100000.csv` | block Bures distance of BlockGeo-QEM and of the HS-trained model for every block, with its ideal purity | `paper_review_checks.py purity` | prediction files of `oursnl_tfim_n{6,8}`, `ours_tfim_n10`, `ours_random_n10` and `ours_dtfim_n8` at 10⁵ shots (2.1, 2.2) |
-| `tables/tab_wtl.tex` | LaTeX rows of the win/tie/loss table, one row per family and n, with the win/tie/loss counts over the six depths and the geometric-mean error ratio of BlockGeo-QEM against the best baseline for the local Bures and trace distances at 10⁴, 10⁵ and 10⁶ shots; the last rows are uniform TFIM on the second device | `paper_tables.py` | `base_*` and `ours_*` of 2.1, `results_v3_torino/` (2.11) |
+| `tables/tab_wtl.tex` | LaTeX rows of the win/tie/loss table, one row per family and n, with the win/tie/loss counts over the six depths and the geometric-mean error ratio of BlockGeo-QEM against the best baseline for the local Bures and trace distances at 10⁴, 10⁵ and 10⁶ shots; the last two blocks are uniform and disordered TFIM on the second device | `paper_tables.py` | `base_*` and `ours_*` of 2.1, `results_v3_torino/` (2.11) |
 | `results_v3/compare_BlockGeo-QEM.csv` | best baseline, error ratio, Wilcoxon p-value and outcome for every family, n, budget, depth and metric | `analyze_v3.py` | 2.1 |
 | `results_v3b3/compare_b2_b3_{family}_n8.csv` | error ratio of BlockGeo-QEM to the best baseline, the best baseline, the outcome and the ratio of the HS-trained model to BlockGeo-QEM, per block size, budget, depth and metric (uniform and disordered TFIM, n = 8) | `paper_b3.py` | 2.1, 2.2, 2.12 |
 | `results_v3b3/purity_resolved_b2_b3_{family}_n8_B100000.csv` | block Bures distance of BlockGeo-QEM and of the HS-trained model for every two- and three-qubit block, with its ideal purity and smallest eigenvalue | `paper_b3.py` | prediction files of 2.1, 2.2 and 2.12 at 10⁵ shots |
@@ -385,8 +395,8 @@ python src/find_chain.py sherbrooke ecr 33,39,40,41,53,60,59,58,71,77,78,79,91,9
 | `paper_tables.py numbers` | one- and eight-step comparison with GNN-QEM (uniform TFIM), median PEC sampling overhead γ², exact limit, spectral quantities, ablation ratios, size transfer and the number of trainable parameters of the BlockGeo-QEM network for n = 6, 8, 10, 20 |
 | `paper_tables.py cdr` | BlockGeo-QEM+CDR against OLS+CDR, BlockGeo-QEM against OLS+CDR, and BlockGeo-QEM+CDR against BlockGeo-QEM, as win/tie/loss counts and geometric-mean ratios |
 | `paper_tables.py marginals` | median over test circuits and blocks of the purity and of the smallest eigenvalue of the ideal block marginals, per family, n and depth, and the range of the median purity per family; reads only the `_test` files of 1.1 |
-| `paper_extra.py torino` | second device, win/tie/loss counts and ratios for six metrics pooled over n and per n, per-depth ratios and best baselines, and the HS control |
-| `paper_extra.py n20` | 20-qubit chain, win/tie/loss counts and ratios of every BlockGeo-QEM variant, and the mean Bures distance per method and depth |
+| `paper_extra.py torino` | second device, per family: win/tie/loss counts and ratios for six metrics pooled over n and per n, per-depth ratios and best baselines, and the HS control where it was run |
+| `paper_extra.py n20` | 20-qubit chain, per family: win/tie/loss counts and ratios of every BlockGeo-QEM variant, per-depth ratios and outcomes of BlockGeo-QEM trained at n = 20, the mean Bures distance per method and depth, and the errors of the model transferred from n = 10 on the qubits of the 10-qubit training chain and on the added qubits |
 | `paper_extra.py gnnb` | GNN trunk (n = 8), ratio of its mean local Bures and trace distances to those of BlockGeo-QEM and ratio of those of GNN-QEM to it, per family, budget and depth, with their ranges |
 | `paper_b3.py` | per family, the error ratios and best baselines per block size, budget and depth, the HS control per depth, the median smallest eigenvalue and the mean Bures distance of BlockGeo-QEM per purity bin, and the Bures distances of the unmitigated estimate, GNN-QEM and BlockGeo-QEM, followed by the written table rows |
 | `analyze_nl.py` | spectral quantities per setting against the best baseline and the two Euclidean ablations |

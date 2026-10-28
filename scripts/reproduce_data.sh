@@ -2,7 +2,7 @@
 # Generates the simulated circuit data of every study (density-matrix simulation with the noise models of the
 # FakeSherbrooke and FakeTorino snapshots, and the MPDO simulator for the 20-qubit chain).
 #
-# It takes about 40 hours of computing and 10.5 GB of disk space. The times below were measured with 6 to 12
+# It takes about 47 hours of computing and 12.0 GB of disk space. The times below were measured with 6 to 12
 # worker processes. The generators skip files that already exist, so the script can be restarted after an
 # interruption. The worker count does not change the data.
 #
@@ -60,12 +60,17 @@ done
 #    (about 6 min).
 run python src/gen_exp12.py --family tfim --n 8 --depths 1,3,6 --drift 0.7,0.85,1.15,1.3 --K 24 --workers "$WORKERS"
 
-# 4. 20-qubit chain with the MPDO simulator, Trotter steps 1 to 3 (about 4 min).
-run env "${CHAIN20[@]}" python src/gen20.py --n 20 --depths 1,2,3 --workers "$WORKERS"
+# 4. 20-qubit chain with the MPDO simulator, uniform and disordered TFIM, Trotter steps 1 to 3 (about 6 min).
+for fam in tfim dtfim; do
+  run env "${CHAIN20[@]}" python src/gen20.py --family "$fam" --n 20 --depths 1,2,3 --workers "$WORKERS"
+done
 
-# 5. Second device (FakeTorino), uniform TFIM, n = 6, 8, 10 (about 6.5 h; n = 10 takes about 5.6 h).
-for n in 6 8 10; do
-  run env "${TORINO[@]}" python src/gen_v3.py --family tfim --n "$n" --depths 1,2,3,4,6,8 --workers "$WORKERS"
+# 5. Second device (FakeTorino), uniform and disordered TFIM, n = 6, 8, 10 (about 12.5 h; n = 10 takes about 5.5 h
+#    per family).
+for fam in tfim dtfim; do
+  for n in 6 8 10; do
+    run env "${TORINO[@]}" python src/gen_v3.py --family "$fam" --n "$n" --depths 1,2,3,4,6,8 --workers "$WORKERS"
+  done
 done
 
 # 6. Three-qubit blocks (27 covering settings), uniform and disordered TFIM, n = 8, the circuits of step 1 (about
