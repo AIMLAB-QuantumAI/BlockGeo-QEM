@@ -9,9 +9,10 @@ For each overlapping 2-qubit block k of an n-qubit chain, the measured Pauli coo
   3. Physical output   rho_k = A A^dag / Tr(A A^dag),  A = chol(Pi(s_lin,k)) + f_theta(...)
   4. Loss          D_B^2(rho_k, rho_ideal,k) + beta * (1/4) ||s(rho_k) - s_ideal,k||^2
 
-Pi is the nearest-state projection. The number of training epochs is chosen on a held-out
-split; epochs whose validation coordinate error exceeds (1 + tol) times that of the backbone
-are not eligible, so the method returns the projected backbone when the correction does not help.
+Pi is the nearest-state projection. The number of training epochs is chosen by the loss on a held-out
+split, and the method returns the projected backbone when no epoch lowers that loss. A finite tolerance
+tol (argument or BLOCKGEO_TOL) adds a stricter check: epochs whose validation coordinate error exceeds
+(1 + tol) times that of the backbone are then not eligible. The default tol = inf disables it.
 """
 import os
 
@@ -137,9 +138,11 @@ class BlockNet(nn.Module):
 class BlockGeoQEM:
     def __init__(self, scales=(1,), output="chol", loss="bures", beta=0.3, hidden=128, depth=2, ctx=16,
                  neighbors=True, pos_mode="index", lr=1e-3, wd=1e-4, max_epochs=4000, patience=400,
-                 val_frac=0.2, seeds=(0, 1, 2), tol=0.02, device=None):
-        self.__dict__.update(locals())       # tol: coordinate-error tolerance of the validation check
+                 val_frac=0.2, seeds=(0, 1, 2), tol=None, device=None):
+        self.__dict__.update(locals())
         self.__dict__.pop("self")
+        if tol is None:                      # coordinate-error tolerance of the validation check; inf = loss alone
+            self.tol = float(os.environ.get("BLOCKGEO_TOL", "inf"))
         self.ns, self.D = NS, DIM                                   # coordinates per block, block dimension
         self._tril = torch.tril_indices(self.D, self.D, offset=-1)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -224,7 +227,7 @@ class BlockGeoQEM:
                     v, mse = [float(u) for u in self._loss(self._forward(net, V), V)]
                 if v < best - 1e-12:
                     last = ep
-                    if mse <= mse0 * (1 + self.tol):
+                    if self.tol == float("inf") or mse <= mse0 * (1 + self.tol):
                         best, best_ep = v, ep
                         best_state = {k: x.detach().clone() for k, x in net.state_dict().items()}
                 elif ep - last > self.patience:

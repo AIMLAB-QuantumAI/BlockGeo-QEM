@@ -195,7 +195,7 @@ python src/run_tol.py --family random --n 8 --budget 100000 --depths 4,8,12,16,2
 python src/run_tol.py --family tfim --n 8 --budget 100000 --depths 1,2,3,4,6,8
 ```
 
-Writes `results_v3/tol_{family}_n{n}_B100000_samples.csv` with the default rule (`BlockGeo-QEM (tol 0.02)`) and with the held-out loss alone (`BlockGeo-QEM (no check)`). The column `epochs` holds the selected epoch of each of the three seeds, and -1 means that no epoch qualified.
+Writes `results_v3/tol_{family}_n{n}_B100000_samples.csv` with a stricter check that also requires the held-out coordinate error to stay within 2% of that of the backbone (`BlockGeo-QEM (tol 0.02)`) and with the default rule, the held-out loss alone (`BlockGeo-QEM (no check)`). The column `epochs` holds the selected epoch of each of the three seeds, and -1 means that no epoch qualified.
 
 ### 2.7 Training seeds
 

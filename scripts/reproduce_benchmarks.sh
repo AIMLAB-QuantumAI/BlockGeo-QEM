@@ -20,6 +20,8 @@ mkdir -p "$WORK/logs"
 WORK="$(cd "$WORK" && pwd)"
 export BLOCKGEO_WORKDIR="$WORK"
 cd "$REPO"
+# BlockGeo-QEM selects its training epochs by the held-out loss alone (the default of src/v3.py).
+unset BLOCKGEO_TOL
 
 # Default device and data version (FakeSherbrooke, WORK/results_v3). The second device and the 20-qubit chain are
 # selected per command below.

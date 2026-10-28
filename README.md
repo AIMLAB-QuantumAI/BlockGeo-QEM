@@ -10,7 +10,7 @@ Jioh Lee (Korea University), Sung Whan Yoon (UNIST) and Joongheon Kim (Korea Uni
 
 ## Overview
 
-On an n-qubit chain, every pair of neighbouring qubits (k, k+1) forms a block whose 15 Pauli coordinates are estimated from nine covering measurement settings. BlockGeo-QEM starts from a per-coordinate ridge regression of these noisy coordinates, and a neural network then refines the coordinates and corrects the Cholesky factor A of their nearest density matrix, so the output ρ = AA†/Tr(AA†) is always a valid state. This state output is trained with the squared Bures distance to the ideal block state plus a weighted coordinate error. Training epochs are chosen on held-out training circuits among those whose coordinate error stays within 2% of that of the projected linear estimate, and the method falls back to the projected linear estimate when no epoch qualifies. This repository contains the simulation pipeline, BlockGeo-QEM and the baselines, the scripts that write the win/tie/loss table, the figures and the printed statistics of every study, and the measurements of a hardware experiment on ibm_fez.
+On an n-qubit chain, every pair of neighbouring qubits (k, k+1) forms a block whose 15 Pauli coordinates are estimated from nine covering measurement settings. BlockGeo-QEM starts from a per-coordinate ridge regression of these noisy coordinates, and a neural network then refines the coordinates and corrects the Cholesky factor A of their nearest density matrix, so the output ρ = AA†/Tr(AA†) is always a valid state. This state output is trained with the squared Bures distance to the ideal block state plus a weighted coordinate error. The number of training epochs is chosen by the loss on held-out training circuits, and the method falls back to the projected linear estimate when no epoch lowers that loss. This repository contains the simulation pipeline, BlockGeo-QEM and the baselines, the scripts that write the win/tie/loss table, the figures and the printed statistics of every study, and the measurements of a hardware experiment on ibm_fez.
 
 ## Repository layout
 
@@ -251,6 +251,7 @@ These are the variables that the code in `src/` and `hardware/` reads.
 | `BLOCKGEO_BACKEND` | `src/noise_layout.py` | `sherbrooke` | fake backend whose calibration defines the noise model (`torino` for the second device) |
 | `BLOCKGEO_TWOQ` | `src/noise_layout.py` | `ecr` | native two-qubit gate of that backend (`cz` for the second device) |
 | `BLOCKGEO_CHAIN` | `src/noise_layout.py` | `33,39,40,41,53,60,59,58,71,77` | physical qubits of the chain; a run with n qubits uses the first n |
+| `BLOCKGEO_TOL` | `src/v3.py` | `inf` | tolerance of the validation check: a finite value such as `0.02` also excludes epochs whose held-out coordinate error exceeds (1 + tolerance) times that of the projected linear estimate; `inf` selects epochs by the held-out loss alone |
 | `GPU_FRAC` | `src/v3.py` | unset | if set, the fraction of GPU memory one process may allocate |
 | `OMP_NUM_THREADS` | `src/gen_v3.py`, `gen_v3_trcdr.py`, `gen_exp12.py`, `gen20.py` | `1` if unset | threads of the linear-algebra libraries in the data generators, which set it before numpy is imported |
 
