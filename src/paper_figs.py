@@ -4,6 +4,8 @@ usage: paper_figs.py [target ...]          (default: every target)
 
 main          main_tfim.pdf: local Bures and trace distance vs Trotter steps, one column per n (uniform TFIM,
               1e5 and 1e4 shots)
+budget        budget.pdf: geometric mean over depths of the error ratio of BlockGeo-QEM to the best baseline vs
+              shot budget, per family (geometric mean over n, bars from the smallest to the largest n value)
 geometry      geometry.pdf: state-head ablations and the GNN trunk (gnnb_*.csv of run_gnnb.py, if run) vs Trotter
               steps, block Bures distance in bins of ideal block purity (purity_resolved_B100000.csv of
               paper_review_checks.py purity) and the beta sweep (TFIM n=8, 1e5 shots)
@@ -27,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import analyze_v3 as A
 import paths
 
 R = paths.RES_DIR + os.sep
@@ -171,13 +174,14 @@ def fig_hardware():
     runs = {1: "ibm_fez_d1_tr100_te30_s1000", 2: "ibm_fez_d2_tr100_te30_s500"}
     df = pd.concat([pd.read_csv(HW + f"{t}/results.csv") for t in runs.values()])
     order = [("Noisy", "Unmitigated"), ("OLS", "OLS"), ("RF", "RF"), ("MLP-QEM", "MLP"), ("GNN-QEM", "GNN"),
-             ("abl: HS state loss", "HS control"), ("BlockGeo-QEM", "BlockGeo-QEM")]
+             ("abl: HS state loss", "HS state loss"), ("BlockGeo-QEM", "BlockGeo-QEM")]
     cols = {"Noisy": (0.6, 0.6, 0.6), "OLS": STYLE["OLS"][1], "RF": STYLE["RF"][1], "MLP-QEM": STYLE["MLP-QEM"][1],
             "GNN-QEM": STYLE["GNN-QEM"][1], "abl: HS state loss": (0.95, 0.62, 0.40), "BlockGeo-QEM": ORANGE}
     qb_sim = read("quench_blocks_tfim_n8_B10000.csv")
     qb_hw = pd.read_csv(HW + "quench_ibm_fez/blocks.csv") if os.path.exists(HW + "quench_ibm_fez/blocks.csv") else None
     npanel = 3 if qb_sim is not None else 2
-    fig, axes = plt.subplots(1, npanel, figsize=(3.4 if npanel == 2 else 7.0, 1.9), squeeze=False)
+    fig, axes = plt.subplots(1, npanel, figsize=(3.4 if npanel == 2 else 7.0, 1.9 if npanel == 2 else 2.15),
+                             squeeze=False)
     w = 0.11
     for ax, met, lab, tag in zip(axes[0], ("local_bures", "local_trace"), ("Bures distance", "Trace distance"),
                                  ("(a)", "(b)")):
@@ -215,7 +219,7 @@ def fig_hardware():
     fig.legend(h, l, loc="upper center", ncol=4 if npanel == 2 else 7, frameon=False, bbox_to_anchor=(0.5, 1.0),
                handlelength=1.6, columnspacing=0.8)
     fig.tight_layout(pad=0.3, w_pad=0.8)
-    fig.subplots_adjust(top=1 - (0.52 if npanel == 2 else 0.32) / fig.get_size_inches()[1])
+    fig.subplots_adjust(top=1 - (0.52 if npanel == 2 else 0.55) / fig.get_size_inches()[1])   # legend row above the panel tags
     os.makedirs(FIG, exist_ok=True)
     fig.savefig(FIG + "hardware.pdf")
     plt.close(fig)
@@ -369,7 +373,44 @@ def fig_robust(B=100000, d=3):
     print("wrote", FIG + "robust.pdf")
 
 
-TARGETS = ("main", "geometry", "spectral", "robust", "n20", "hardware", "unstructured")
+def budget_ratios():
+    """Geometric mean over depths of the error ratio to the best baseline, per (family, n, budget, metric)."""
+    df = A.load()
+    df = df[df.family.isin(["tfim", "dtfim", "random"])]
+    c = A.compare(df, "BlockGeo-QEM")
+    c["budget"] = c.budget.astype(int)
+    return c.groupby(["family", "n", "budget", "metric"]).ratio.apply(lambda x: np.exp(np.log(x).mean())).rename(
+        "gm").reset_index()
+
+
+def fig_budget():
+    g = budget_ratios()
+    order = [10000, 100000, 1000000, 0]
+    xt = ["$10^4$", "$10^5$", "$10^6$", r"$\infty$"]
+    fam_sty = {"tfim": ("Uniform TFIM", ORANGE, "o", "-"), "dtfim": ("Disordered TFIM", (0.00, 0.45, 0.70), "s", "--"),
+               "random": ("Random circuits", (0.45, 0.45, 0.45), "^", ":")}
+    fig, axes = plt.subplots(1, 2, figsize=(3.4, 1.75), squeeze=False)
+    for ax, met in zip(axes[0], ("local_bures", "local_trace")):
+        for k, (fam, (lab, c, mk, ls)) in enumerate(fam_sty.items()):
+            s = g[(g.family == fam) & (g.metric == met)]
+            if s.empty:
+                continue
+            per = s.pivot(index="budget", columns="n", values="gm").reindex(order)
+            gm = np.exp(np.log(per).mean(1))
+            lo, hi = gm - per.min(1), per.max(1) - gm
+            x = np.arange(len(order)) + (k - 1) * 0.08
+            ax.errorbar(x, gm.values, yerr=[lo.values, hi.values], color=c, marker=mk, ls=ls, label=lab, **EB)
+        ax.axhline(1.0, color="k", lw=0.6, ls=":")
+        ax.set_yscale("log")
+        ax.set_xticks(range(len(order)))
+        ax.set_xticklabels(xt)
+        ax.set_xlabel("Shots per circuit")
+        ax.set_ylabel(f"{MLAB[met].replace('Local ', '').capitalize()} ratio")
+        ax.grid(alpha=0.25, lw=0.4)
+    finish(fig, axes, 3, "budget.pdf", top=0.22)
+
+
+TARGETS = ("main", "budget", "geometry", "spectral", "robust", "n20", "hardware", "unstructured")
 
 if __name__ == "__main__":
     which = sys.argv[1:] or list(TARGETS)
@@ -379,7 +420,10 @@ if __name__ == "__main__":
     if "main" in which:
         fig_rows([("tfim", 100000, "local_bures", "Bures, $10^5$ shots"),
                   ("tfim", 100000, "local_trace", "Trace, $10^5$ shots"),
-                  ("tfim", 10000, "local_bures", "Bures, $10^4$ shots")], "main_tfim.pdf")
+                  ("tfim", 10000, "local_bures", "Bures, $10^4$ shots"),
+                  ("tfim", 10000, "local_trace", "Trace, $10^4$ shots")], "main_tfim.pdf")
+    if "budget" in which:
+        fig_budget()
     if "geometry" in which:
         fig_geometry()
     if "spectral" in which:

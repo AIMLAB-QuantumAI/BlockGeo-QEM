@@ -16,8 +16,10 @@ All notable changes to this project are listed here. Version numbers follow [sem
 - Blocks of three neighbouring qubits (`BLOCKGEO_B=3`, 27 covering settings) in the data generator, the measurement, the baselines and BlockGeo-QEM, with GNN-QEM for three-qubit blocks (`run_gnn_b3.py`) and the comparison of two- and three-qubit blocks (`paper_b3.py`).
 - The GNN-trunk ablation: `gnn_bures.py` uses the message-passing network of GNN-QEM as the trunk of BlockGeo-QEM with its backbone, heads, loss and training. `run_gnnb.py` runs it, `paper_extra.py gnnb` compares it with BlockGeo-QEM and GNN-QEM, and the geometry figure shows it.
 - Disordered TFIM on the second device (n = 6, 8, 10) and on the 20-qubit chain. `gen20.py` and `run20.py` take `--family`, the win/tie/loss table has one second-device block per family, and `paper_extra.py torino` and `n20` report each family separately. `paper_extra.py n20` also compares the errors of the model transferred from n = 10 on the two halves of the 20-qubit chain.
+- `paper_figs.py budget`, the error ratio of BlockGeo-QEM to the best baseline against the shot budget, and `fig_metric_dome.py`, the Bures geometry of a qubit section.
 
 ### Changed
+- The main figure also shows the trace distance at 10⁴ shots, and the hardware figure labels the Hilbert-Schmidt-trained model "HS state loss" as the geometry figure does.
 - BlockGeo-QEM chooses the number of training epochs by the held-out loss alone, the rule of the final results. The earlier default, which also required the held-out coordinate error to stay within 2% of that of the projected linear estimate, is available with `BLOCKGEO_TOL=0.02` or `tol=0.02`, and `run_tol.py` runs it explicitly.
 - CI runs on pushes to `main`, on pull requests and on demand, and cancels runs that a newer push supersedes; pushes to other branches no longer start a separate run.
 - Importing `qemlib` keeps thread settings chosen by the user; 4 threads remain the default (#11).
