@@ -19,8 +19,9 @@ def confusion(n):
     return _A[n]
 
 
-def measure(Q, n, shots, rng, rem=True):
-    """Q: [..., 9, 2^n] -> (S_hat [..., n-1, 15], p_hat [..., 2^n])."""
+def measure(Q, n, shots, rng, rem=True, b=2):
+    """Q: [..., 3^b, 2^n] -> (S_hat [..., n-b+1, 4^b-1], p_hat [..., 2^n]) for blocks of b qubits (b = 2: 9 settings,
+    15 coordinates)."""
     A = confusion(n)
     lead, D = Q.shape[:-2], Q.shape[-1]
     Qf = np.asarray(Q, dtype=np.float64).reshape(-1, Q.shape[-2], D)
@@ -29,7 +30,7 @@ def measure(Q, n, shots, rng, rem=True):
     freq = Qm if shots is None else rng.multinomial(shots, Qm) / float(shots)
     if rem:
         freq = apply_per_qubit(freq, np.linalg.inv(A), n)
-    signs, wcover, zidx, nb, ns = SH.tables(n)
+    signs, wcover, zidx, nb, ns = SH.tables(n, b)
     est = np.einsum("nsd,dm,sm->nm", freq, signs, wcover)
     return np.clip(est, -1, 1).reshape(lead + (nb, ns)), freq[:, zidx].reshape(lead + (D,))
 

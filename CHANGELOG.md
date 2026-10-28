@@ -13,6 +13,7 @@ All notable changes to this project are listed here. Version numbers follow [sem
 - `examples/mitigate_own_data.py`, which applies BlockGeo-QEM to block coordinates supplied by the user.
 - A `Makefile` with targets for the tests, the quick start, the example and the reproduction scripts.
 - A CI job that checks the shell scripts with `bash -n` and ShellCheck.
+- Blocks of three neighbouring qubits (`BLOCKGEO_B=3`, 27 covering settings) in the data generator, the measurement, the baselines and BlockGeo-QEM, with GNN-QEM for three-qubit blocks (`run_gnn_b3.py`) and the comparison of two- and three-qubit blocks (`paper_b3.py`).
 
 ### Changed
 - BlockGeo-QEM chooses the number of training epochs by the held-out loss alone, the rule of the final results. The earlier default, which also required the held-out coordinate error to stay within 2% of that of the projected linear estimate, is available with `BLOCKGEO_TOL=0.02` or `tol=0.02`, and `run_tol.py` runs it explicitly.

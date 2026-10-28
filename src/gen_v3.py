@@ -1,11 +1,13 @@
 """v3 data: corrected chain layout, Pauli-twirled gate noise; readout errors are applied at measurement time.
 
 Per (family, n, depth) writes to the feats directory (paths.FEAT_DIR, WORK/feats_v3 by default):
-  {fam}_n{n}_d{d}_train.npz / _test.npz : S_ideal, P_ideal, Q_s{1,3,5} [N, 9, 2^n] (true outcome distributions
-                                           in the 9 covering settings), S_s{1,3,5}; test also has gamma (PEC overhead)
+  {fam}_n{n}_d{d}_train.npz / _test.npz : S_ideal, P_ideal, Q_s{1,3,5} [N, 3^b, 2^n] (true outcome distributions
+                                           in the 3^b covering settings), S_s{1,3,5}; test also has gamma (PEC overhead)
   {fam}_n{n}_d{d}_cdr.npz               : K=24 near-Clifford training circuits of every test circuit (CDR):
-                                           S_ideal [50, K, nb, 15], Q_s{1,3,5} [50, K, 9, 2^n]
+                                           S_ideal [50, K, nb, 4^b-1], Q_s{1,3,5} [50, K, 3^b, 2^n]
   {fam}_n{n}_d{d}_cliff.npz             : near-Clifford version of every training circuit: S_ideal, Q_s1
+Blocks have b = 2 qubits (9 settings, nb = n - 1 blocks of 15 coordinates) unless BLOCKGEO_B=3 (27 settings,
+n - 2 blocks of 63 coordinates; use BLOCKGEO_TAG=_v3b3 so that the files go to their own directory).
 """
 import argparse
 import multiprocessing as mp
@@ -22,6 +24,7 @@ import qemlib as L
 from paths import FEAT_DIR
 
 SCALES = (1, 3, 5)
+BLOCK = int(os.environ.get("BLOCKGEO_B", "2"))       # block size: 9 settings for b=2, 27 for b=3
 _S = {}
 
 
@@ -62,11 +65,11 @@ def _work(task):
     if kind == "ideal":
         rho = L.simulate_density_matrix(qc, _S["ideal"], n)
         P = np.clip(np.real(np.diag(rho)), 0, None)
-        return key, kind, L.block_paulis(rho, n, 2), P / P.sum(), None
+        return key, kind, L.block_paulis(rho, n, BLOCK), P / P.sum(), None
     if kind == "gamma":
         return key, kind, NL.circuit_gamma(NL.to_device(qc, n), n), None, None
     rho = L.simulate_density_matrix(NL.to_device(L.fold_global(qc, kind), n), _S["noisy"], n)
-    return key, kind, L.block_paulis(rho, n, 2), None, L.setting_probs(rho, n, 2).astype(np.float32)
+    return key, kind, L.block_paulis(rho, n, BLOCK), None, L.setting_probs(rho, n, BLOCK).astype(np.float32)
 
 
 def path(fam, n, d, part):
@@ -74,7 +77,7 @@ def path(fam, n, d, part):
 
 
 def run_setting(pool, fam, n, d, n_train, n_test, K):
-    D, nb, nc, nset = 2 ** n, n - 1, 15, 9               # dimension, blocks, coordinates per block, settings
+    D, nb, nc, nset = 2 ** n, n - BLOCK + 1, 4 ** BLOCK - 1, 3 ** BLOCK     # dimension, blocks, coords, settings
     train = L.make_circuits(fam, n, d, n_train, "train")
     test = L.make_circuits(fam, n, d, n_test, "test")
     rng = np.random.default_rng([7, n, d, 0 if fam == "tfim" else 1])

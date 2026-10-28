@@ -1,6 +1,7 @@
 """Baseline mitigators operating on block Pauli coordinates.
 
-Shapes: S arrays are [N, nblocks, 15]; stacks over noise scales are [K, N, nblocks, 15].
+Shapes: S arrays are [N, nblocks, 4^b-1] (15 coordinates for two-qubit blocks); stacks over noise scales are
+[K, N, nblocks, 4^b-1].
 """
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
