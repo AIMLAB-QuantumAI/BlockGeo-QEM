@@ -276,7 +276,7 @@ If you use this code, please cite it using [CITATION.cff](CITATION.cff).
   title   = {{BlockGeo-QEM}},
   year    = {2026},
   month   = oct,
-  version = {0.1.0},
+  version = {0.2.0},
   url     = {https://github.com/AIMLAB-QuantumAI/BlockGeo-QEM}
 }
 ```

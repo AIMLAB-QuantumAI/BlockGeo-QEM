@@ -2,7 +2,7 @@
 
 All notable changes to this project are listed here. Version numbers follow [semantic versioning](https://semver.org).
 
-## Unreleased
+## 0.2.0 (2026-10-28)
 
 ### Added
 - Example notebook `examples/quickstart.ipynb` that runs a small benchmark end to end, with stored outputs (#10).
@@ -30,7 +30,7 @@ All notable changes to this project are listed here. Version numbers follow [sem
 ### Fixed
 - The MPDO simulator falls back to the LAPACK driver gesvd when the default SVD does not converge.
 - `tab_wtl.tex` no longer ends with a line break, which added an empty row at the end of the table.
-- The hardware quench test compares the purity and the concurrence with a tolerance that does not depend on the CPU (#8).
+- The Holm correction of `paper_review_checks.py holm` also covers the tests of the second device when its results exist; it covered only those of the first device (#27).
 
 ## 0.1.0 (2026-10-20)
 
