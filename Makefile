@@ -11,7 +11,7 @@ help:
 	@echo "make example     BlockGeo-QEM on a small simulated data set (examples/mitigate_own_data.py)"
 	@echo "make data        simulated data of all studies (about 47 h, 12 GB)"
 	@echo "make benchmarks  every method and study (about 49 h)"
-	@echo "make figures     win/tie/loss table, figures and printed statistics (about 15 min)"
+	@echo "make figures     tables, figures and printed statistics (about 15 min)"
 	@echo "make clean       remove Python and pytest caches (generated data in work/ are kept)"
 
 install:

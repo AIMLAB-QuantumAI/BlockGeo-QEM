@@ -10,7 +10,7 @@ Jioh Lee (Korea University), Sung Whan Yoon (UNIST) and Joongheon Kim (Korea Uni
 
 ## Overview
 
-On an n-qubit chain, every pair of neighbouring qubits (k, k+1) forms a block whose 15 Pauli coordinates are estimated from nine covering measurement settings. BlockGeo-QEM starts from a per-coordinate ridge regression of these noisy coordinates, and a neural network then refines the coordinates and corrects the Cholesky factor A of their nearest density matrix, so the output ρ = AA†/Tr(AA†) is always a valid state. This state output is trained with the squared Bures distance to the ideal block state plus a weighted coordinate error. The number of training epochs is chosen by the loss on held-out training circuits, and the method falls back to the projected linear estimate when no epoch lowers that loss. This repository contains the simulation pipeline, BlockGeo-QEM and the baselines, the scripts that write the win/tie/loss table, the figures and the printed statistics of every study, and the measurements of a hardware experiment on ibm_fez.
+On an n-qubit chain, every pair of neighbouring qubits (k, k+1) forms a block whose 15 Pauli coordinates are estimated from nine covering measurement settings. BlockGeo-QEM starts from a per-coordinate ridge regression of these noisy coordinates, and a neural network then refines the coordinates and corrects the Cholesky factor A of their nearest density matrix, so the output ρ = AA†/Tr(AA†) is always a valid state. This state output is trained with the squared Bures distance to the ideal block state plus a weighted coordinate error. The number of training epochs is chosen by the loss on held-out training circuits, and the method falls back to the projected linear estimate when no epoch lowers that loss. This repository contains the simulation pipeline, BlockGeo-QEM and the baselines, the scripts that write the tables, the figures and the printed statistics of every study, and the measurements of a hardware experiment on ibm_fez.
 
 ## Repository layout
 
@@ -28,15 +28,15 @@ BlockGeo-QEM/
 │   ├── measure_v3.py              finite-shot measurement with readout errors and readout-error mitigation
 │   ├── shots.py, readout.py       block Pauli estimates from the covering settings, tensored readout errors and REM
 │   ├── geometry.py                Bures metric in Pauli coordinates
-│   ├── bench.py, bench_shots.py   error metrics of every runner, runner of the BlockGeo-v1 baseline
+│   ├── bench.py, bench_shots.py   error metrics of every runner, runner of the direct-network baseline BlockGeo-v1
 │   ├── mpdo.py, sample_blocks.py  20-qubit simulator (matrix-product density operator) and block sampler
 │   ├── gen_*.py, gen20.py         data generators
 │   ├── run_*.py, run20.py         runners of the studies
-│   ├── analyze_*.py, paper_*.py   analyses, the win/tie/loss table and the figures
+│   ├── analyze_*.py, paper_*.py   analyses, the tables and the figures
 │   ├── fig_metric_dome.py         figure of the Bures geometry of a qubit section (needs no data)
 │   ├── find_chain.py              lowest-error chain on the coupling graph of a fake backend
 │   ├── test_mpdo.py, test_sample_blocks.py   checks of the 20-qubit simulator and the block sampler
-│   └── blockgeo_qem_fixed.py      vendored code of BlockGeo-v1 (the earlier workshop model) and simulation primitives
+│   └── blockgeo_qem_fixed.py      vendored code of BlockGeo-v1 (the direct-network baseline) and simulation primitives
 ├── hardware/                      IBM Quantum measurement, labels and analysis scripts
 ├── data/hardware/                 measurements of three runs on ibm_fez
 ├── scripts/                       reproduce_data.sh, reproduce_benchmarks.sh, reproduce_figures.sh
@@ -119,12 +119,12 @@ Three scripts run the full pipeline in order. They can be started from any direc
 ```bash
 scripts/reproduce_data.sh         # simulated circuit data, about 47 h and 12.0 GB
 scripts/reproduce_benchmarks.sh   # every method and study, about 49 h
-scripts/reproduce_figures.sh      # win/tie/loss table, figures and printed statistics, about 15 min
+scripts/reproduce_figures.sh      # tables, figures and printed statistics, about 15 min
 ```
 
 `reproduce_data.sh` runs `WORKERS` simulations in parallel (default 8), and its memory use grows with that number. The scripts log their output to `logs/` in `BLOCKGEO_WORKDIR`.
 
-The table and the figures are written by the analysis scripts in `src/`. Paths are relative to `BLOCKGEO_WORKDIR`.
+The tables and the figures are written by the analysis scripts in `src/`. Paths are relative to `BLOCKGEO_WORKDIR`.
 
 | Output | Content | Analysis | Runs it needs |
 |---|---|---|---|

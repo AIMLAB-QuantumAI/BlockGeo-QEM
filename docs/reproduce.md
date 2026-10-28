@@ -1,6 +1,6 @@
 # Reproduction guide
 
-This guide lists, in order, every command that regenerates the simulated data, runs every method and writes the win/tie/loss table, the figures and the printed statistics. The scripts `scripts/reproduce_data.sh`, `scripts/reproduce_benchmarks.sh` and `scripts/reproduce_figures.sh` run the same commands in the same order and also write their output to `logs/` in the working directory.
+This guide lists, in order, every command that regenerates the simulated data, runs every method and writes the tables, the figures and the printed statistics. The scripts `scripts/reproduce_data.sh`, `scripts/reproduce_benchmarks.sh` and `scripts/reproduce_figures.sh` run the same commands in the same order and also write their output to `logs/` in the working directory.
 
 ## Setup
 
@@ -51,7 +51,7 @@ The times below come from the logs of the original runs on one workstation with 
 | three-qubit-block runs | base and `run_gnn_b3.py` 1.5–3 min, ours 3–35 min | about 1.3 h |
 | `run_gnnb.py` | 3–16 min | about 40 min |
 | hardware analyses (`compare_hw.py`, `quench_hw.py`) | 3–4 min per call on four CPU cores | about 10 min |
-| analyses, table and figures | seconds to 2 min | about 15 min |
+| analyses, tables and figures | seconds to 2 min | about 15 min |
 
 In total this is about 96 hours of computing, about 47 h of data generation and about 49 h of runs and analyses. With two jobs in parallel it took 2 to 3 days.
 
@@ -73,7 +73,7 @@ In total this is about 96 hours of computing, about 47 h of data generation and 
 
 **Shot budgets.** `--budget B` is the total number of shots per circuit. The single-scale protocol measures each setting with B/9 shots. The multi-scale protocol of ZNE, vnCDR, vnOLS and BlockGeo-QEM-ms measures each setting at fold scales 1, 3 and 5 with B/27 shots. For three-qubit blocks the shots per setting are B/27 and B/81. Budget 0 gives exact expectation values, with readout errors applied exactly and removed by REM.
 
-**Methods.** `run_v3.py --part base` runs the unmitigated estimate without and with REM (`Noisy (raw)`, `Noisy`), ZNE with linear, Richardson and exponential extrapolation, idealised PEC with the exact twirled noise, CDR, vnCDR, `CDR-family` (a per-coordinate linear map trained on the near-Clifford copies of the training circuits), OLS, vnOLS, RF, MLP-QEM, GNN-QEM and BlockGeo-v1. `run_v3.py --part ours` runs BlockGeo-QEM and BlockGeo-QEM-ms, and at 10⁵ shots also `BlockGeo-QEM (Clifford-trained)` and the ablations `abl: HS state loss`, `abl: coordinate head only` and `abl: no circuit context`. With three-qubit blocks `--part base` leaves out GNN-QEM and BlockGeo-v1, which read two-qubit blocks, and `run_gnn_b3.py` runs GNN-QEM for three-qubit blocks.
+**Methods.** `run_v3.py --part base` runs the unmitigated estimate without and with REM (`Noisy (raw)`, `Noisy`), ZNE with linear, Richardson and exponential extrapolation, idealised PEC with the exact twirled noise, CDR, vnCDR, `CDR-family` (a per-coordinate linear map trained on the near-Clifford copies of the training circuits), OLS, vnOLS, RF, MLP-QEM, GNN-QEM and BlockGeo-v1, a direct network that maps the measured outcome distribution and block coordinates to their ideal values, trained with squared-error, classical-fidelity and Bures losses, without backbone or physical parametrization. `run_v3.py --part ours` runs BlockGeo-QEM and BlockGeo-QEM-ms, and at 10⁵ shots also `BlockGeo-QEM (Clifford-trained)` and the ablations `abl: HS state loss`, `abl: coordinate head only` and `abl: no circuit context`. With three-qubit blocks `--part base` leaves out GNN-QEM and BlockGeo-v1, which read two-qubit blocks, and `run_gnn_b3.py` runs GNN-QEM for three-qubit blocks.
 
 **Result files.** Most runners write one row per method and test circuit to `results_v3/<stem>_samples.csv`, with the columns `method`, `sample`, `local_bures`, `local_trace`, `mae_diag`, `mae_off`, `err_purity`, `err_renyi2`, `err_concurrence`, the fit time (`fit_time_s`) and the setting. `run_beta.py` and the drift study of `run_exp12.py` record no fit time, and the drift study adds the column `drift`. `run_quench.py` writes per-draw chain averages instead (2.10). Most runners also save the predicted block coordinates of every method to `results_v3/pred/<stem>_d<depth>.npz`.
 
@@ -339,7 +339,7 @@ python hardware/quench_hw.py ibm_fez "1:ibm_fez_d1_tr100_te30_s1000,2:ibm_fez_d2
 
 `analyze_hw.py` prints the readout errors from the calibration circuits, the errors of the unmitigated test-circuit estimates and, as a reference, those of the simulated FakeSherbrooke model for the same circuits. `compare_hw.py` trains OLS, RF, MLP-QEM, GNN-QEM, the HS control and BlockGeo-QEM on the measured training circuits, writes `<tag>/results.csv` and `<tag>/pred.npz`, and prints the error ratio of BlockGeo-QEM to the best baseline with a paired Wilcoxon p-value and the ratio of the HS control to BlockGeo-QEM for every metric. ZNE, CDR and PEC need circuits that were not measured, so they are not part of the hardware comparison. `quench_hw.py` mitigates the measured quench circuit with models trained on the hardware runs of the same step count, writes `quench_ibm_fez/results.csv` and `quench_ibm_fez/pred_d{1,2}.npz`, and prints the chain averages.
 
-## 4. Analyses, table and figures
+## 4. Analyses, tables and figures
 
 `scripts/reproduce_figures.sh` runs these commands. Run them without `BLOCKGEO_TAG` and, for the hardware parts, with the same `BLOCKGEO_HW_DIR` as in 3.2. The order matters, because the hardware figure reads the files of `analyze_quench_blocks.py` and the geometry figure reads the CSV file of `paper_review_checks.py purity`.
 
